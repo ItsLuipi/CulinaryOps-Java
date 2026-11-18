@@ -1,0 +1,13 @@
+# NetBeans / Ant build artifacts
+build/
+dist/
+nbproject/private/
+
+# Java compiled / logs
+*.class
+*.log
+hs_err_pid*
+
+# OS / IDE temp
+.DS_Store
+Thumbs.db
