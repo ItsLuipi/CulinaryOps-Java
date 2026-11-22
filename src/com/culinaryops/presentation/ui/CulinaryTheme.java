@@ -78,27 +78,31 @@ public final class CulinaryTheme {
 
     public static JButton createPrimaryButton(String text) {
         JButton btn = new JButton(text);
+        btn.setUI(new javax.swing.plaf.basic.BasicButtonUI());
         btn.setFont(FONT_BODY_BOLD);
         btn.setBackground(ACCENT_APRICOT);
         btn.setForeground(Color.WHITE);
         btn.setFocusPainted(false);
-        btn.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+        btn.setBorder(BorderFactory.createEmptyBorder(9, 16, 9, 16));
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setOpaque(true);
+        btn.setContentAreaFilled(true);
         return btn;
     }
 
     public static JButton createSecondaryButton(String text) {
         JButton btn = new JButton(text);
+        btn.setUI(new javax.swing.plaf.basic.BasicButtonUI());
         btn.setFont(FONT_BODY);
         btn.setBackground(BG_CARD);
         btn.setForeground(TEXT_PRIMARY);
         btn.setFocusPainted(false);
         btn.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(BORDER_FLOUR, 1),
-                BorderFactory.createEmptyBorder(7, 14, 7, 14)));
+                BorderFactory.createEmptyBorder(8, 14, 8, 14)));
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setOpaque(true);
+        btn.setContentAreaFilled(true);
         return btn;
     }
 

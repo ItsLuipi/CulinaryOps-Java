@@ -179,8 +179,8 @@ public class DashboardPanel extends JPanel {
                 .orElse(null);
         if (highestWaste != null) {
             kpiWasteValue.setText(String.format(Locale.US, "%.1f%%", highestWaste.getWastePercentage()));
-            kpiWasteSub.setText(highestWaste.getName() + " ("
-                    + CurrencyFormatter.formatUSD(highestWaste.getEffectiveUnitPrice()) + ")");
+            kpiWasteSub.setText("<html>" + highestWaste.getName() + " ("
+                    + CurrencyFormatter.formatUSD(highestWaste.getEffectiveUnitPrice()) + ")</html>");
         } else {
             kpiWasteValue.setText("0.0%");
             kpiWasteSub.setText("Sin insumos registrados");

@@ -47,9 +47,9 @@ public class CulinaryOps {
 
         SwingUtilities.invokeLater(() -> {
             try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
             } catch (Exception ignored) {
-                // Si el sistema no permite el Look&Feel nativo, conserva el predeterminado
+                // Si falla, conserva el predeterminado
             }
             CulinaryOpsFrame frame = new CulinaryOpsFrame(
                     catalogService,

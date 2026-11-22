@@ -161,6 +161,7 @@ public class CulinaryOpsFrame extends JFrame {
 
     private static JButton createSidebarButton(String text) {
         JButton btn = new JButton(text);
+        btn.setUI(new javax.swing.plaf.basic.BasicButtonUI());
         btn.setFont(CulinaryTheme.FONT_BODY_BOLD);
         btn.setHorizontalAlignment(SwingConstants.LEFT);
         btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
@@ -168,6 +169,7 @@ public class CulinaryOpsFrame extends JFrame {
         btn.setAlignmentX(LEFT_ALIGNMENT);
         btn.setFocusPainted(false);
         btn.setOpaque(true);
+        btn.setContentAreaFilled(true);
         btn.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return btn;
