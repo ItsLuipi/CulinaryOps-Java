@@ -4,6 +4,7 @@
  */
 package com.culinaryops;
 
+
 /**
  * Punto de entrada de CulinaryOps.
  *
@@ -16,6 +17,7 @@ public class CulinaryOps {
      */
     public static void main(String[] args) {
         // TODO code application logic here
+
     }
     
 }

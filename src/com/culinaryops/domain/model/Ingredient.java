@@ -4,20 +4,17 @@
  */
 package com.culinaryops.domain.model;
 
-/**
- *
- * @author roco
- */
+import com.culinaryops.domain.exception.InsufficientStockException;
+import com.culinaryops.domain.model.enums.StockMovementType;
 import com.culinaryops.domain.model.enums.UnitType;
 import com.culinaryops.domain.model.enums.WasteLevel;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
-public class Ingredient {
 
-    private final String id;
+public class Ingredient extends BaseEntity {
+
     private String name;
     private String category;
     private UnitType unit;
@@ -26,113 +23,72 @@ public class Ingredient {
     private double wastePercentage;
     private boolean isPerishable;
     private LocalDate expirationDate;
-    private final LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 
-    public Ingredient(String id,
-                      String name,
-                      String category,
-                      UnitType unit,
-                      double unitPrice,
-                      double stockQuantity,
-                      double wastePercentage,
-                      boolean isPerishable,
-                      LocalDate expirationDate,
-                      LocalDateTime createdAt,
-                      LocalDateTime updatedAt) {
-        if (id == null || id.trim().isEmpty()) {
-            throw new IllegalArgumentException("El ID del ingrediente es obligatorio.");
-        }
-        if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException("El nombre del ingrediente es obligatorio.");
-        }
-        if (unit == null) {
-            throw new IllegalArgumentException("La unidad de medida es obligatoria.");
-        }
-        if (unitPrice < 0) {
-            throw new IllegalArgumentException("El precio unitario no puede ser negativo.");
-        }
-        if (stockQuantity < 0) {
-            throw new IllegalArgumentException("El stock no puede ser negativo.");
-        }
-        if (wastePercentage < 0 || wastePercentage >= 100) {
-            throw new IllegalArgumentException("La merma debe estar entre 0% y menos de 100%.");
-        }
+    public Ingredient(
+            String id,
+            String name,
+            String category,
+            UnitType unit,
+            double unitPrice,
+            double wastePercentage,
+            boolean isPerishable) {
+        this(id, name, category, unit, unitPrice, 0.0, wastePercentage,
+             isPerishable, null, LocalDateTime.now(), LocalDateTime.now());
+    }
 
-        this.id = id.trim();
-        this.name = name.trim();
-        this.category = (category == null || category.trim().isEmpty()) ? "General" : category.trim();
-        this.unit = unit;
-        this.unitPrice = unitPrice;
-        this.stockQuantity = stockQuantity;
-        this.wastePercentage = wastePercentage;
+    public Ingredient(
+            String id,
+            String name,
+            String category,
+            UnitType unit,
+            double unitPrice,
+            double stockQuantity,
+            double wastePercentage,
+            boolean isPerishable,
+            LocalDate expirationDate,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt) {
+        super(id, createdAt, updatedAt);
+        this.name = validateName(name);
+        this.category = normalizeCategory(category);
+        this.unit = validateUnit(unit);
+        this.unitPrice = validateNonNegative(unitPrice, "El precio no puede ser menor a 0.");
+        this.stockQuantity = validateNonNegative(stockQuantity, "La cantidad en el inventario no puede ser menor a 0.");
+        this.wastePercentage = validateWastePercentage(wastePercentage);
         this.isPerishable = isPerishable;
         this.expirationDate = isPerishable ? expirationDate : null;
-        this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();
-        this.updatedAt = updatedAt != null ? updatedAt : this.createdAt;
     }
 
-    public Ingredient(String id,
-                      String name,
-                      String category,
-                      UnitType unit,
-                      double unitPrice,
-                      double wastePercentage,
-                      boolean isPerishable) {
-        this(id, name, category, unit, unitPrice, 0.0, wastePercentage, isPerishable, null,
-                LocalDateTime.now(), LocalDateTime.now());
-    }
-
-    public double getEffectiveUnitPrice() {
-        double yieldFactor = 1.0 - (wastePercentage / 100.0);
-        return yieldFactor <= 0 ? unitPrice : unitPrice / yieldFactor;
-    }
-
-    public double getTotalStockValue() {
-        return stockQuantity * unitPrice;
-    }
-
-    public double getTotalEffectiveStockValue() {
-        double usefulQuantity = stockQuantity * (1.0 - (wastePercentage / 100.0));
-        return usefulQuantity * getEffectiveUnitPrice();
-    }
-
-    public boolean isLowStock() {
-        return isLowStock(2.0);
-    }
-
-    public boolean isLowStock(double threshold) {
-        return stockQuantity <= threshold;
-    }
-
-    public Long getDaysUntilExpiration() {
-        if (expirationDate == null) {
-            return null;
+    private static String validateName(String name) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("No puede estar vacío el nombre.");
         }
-        return ChronoUnit.DAYS.between(LocalDate.now(), expirationDate);
+        return name.trim();
     }
 
-    public boolean isExpiringSoon() {
-        return isExpiringSoon(7);
+    private static String normalizeCategory(String category) {
+        return (category == null || category.isBlank()) ? "General" : category.trim();
     }
 
-    public boolean isExpiringSoon(int daysThreshold) {
-        Long days = getDaysUntilExpiration();
-        return days != null && days <= daysThreshold;
-    }
-
-    public WasteLevel getWasteLevel() {
-        if (wastePercentage < 3.0) {
-            return WasteLevel.LOW;
+    private static UnitType validateUnit(UnitType unit) {
+        if (unit == null) {
+            throw new IllegalArgumentException("La unidad es obligatoria.");
         }
-        if (wastePercentage <= 10.0) {
-            return WasteLevel.MEDIUM;
-        }
-        return WasteLevel.HIGH;
+        return unit;
     }
 
-    public String getId() {
-        return id;
+    private static double validateNonNegative(double value, String message) {
+        if (value < 0) {
+            throw new IllegalArgumentException(message);
+        }
+        return value;
+    }
+
+    private static double validateWastePercentage(double wastePercentage) {
+        if (wastePercentage < 0 || wastePercentage >= 100) {
+            throw new IllegalArgumentException("El porcentaje no puede ser menor a 0 o mayor/igual a 100.");
+        }
+        return wastePercentage;
     }
 
     public String getName() {
@@ -167,11 +123,114 @@ public class Ingredient {
         return expirationDate;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public void updateTechnicalSheet(
+            String name,
+            String category,
+            UnitType unit,
+            double unitPrice,
+            double wastePercentage,
+            boolean isPerishable) {
+        this.name = validateName(name);
+        this.category = normalizeCategory(category);
+        this.unit = validateUnit(unit);
+        this.unitPrice = validateNonNegative(unitPrice, "El precio no puede ser menor a 0.");
+        this.wastePercentage = validateWastePercentage(wastePercentage);
+        this.isPerishable = isPerishable;
+        if (!isPerishable) {
+            this.expirationDate = null;
+        }
+        markUpdated();
     }
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
+
+    public void applyStockMovement(StockMovementType mode, double quantity) {
+        applyStockMovement(mode, quantity, null, null);
+    }
+
+    public void applyStockMovement(
+            StockMovementType mode,
+            double quantity,
+            Double updatedUnitPrice,
+            LocalDate newExpirationDate) {
+        if (mode == null) {
+            throw new IllegalArgumentException("El tipo de movimiento es obligatorio.");
+        }
+        validateNonNegative(quantity, "La cantidad del movimiento no puede ser negativa.");
+        if (updatedUnitPrice != null) {
+            validateNonNegative(updatedUnitPrice, "El precio no puede ser menor a 0.");
+        }
+
+        double nextStock = switch (mode) {
+            case ADD -> this.stockQuantity + quantity;
+            case SUBTRACT -> this.stockQuantity - quantity;
+            case SET -> quantity;
+        };
+
+        if (nextStock < 0) {
+            throw new InsufficientStockException(
+                    "Stock insuficiente para '" + this.name + "'. Disponible: "
+                            + this.stockQuantity + " " + this.unit.getSymbol());
+        }
+
+        this.stockQuantity = nextStock;
+        if (updatedUnitPrice != null) {
+            this.unitPrice = updatedUnitPrice;
+        }
+        if (this.isPerishable && newExpirationDate != null) {
+            this.expirationDate = newExpirationDate;
+        }
+        markUpdated();
+    }
+
+    public double getEffectiveUnitPrice() {
+        double yieldFactor = 1.0 - (wastePercentage / 100.0);
+        if (yieldFactor <= 0) {
+            return unitPrice;
+        }
+        return unitPrice / yieldFactor;
+    }
+
+
+    public double getTotalStockValue() {
+        return stockQuantity * unitPrice;
+    }
+
+    public double getTotalEffectiveStockValue() {
+        double usefulQuantity = stockQuantity * (1.0 - (wastePercentage / 100.0));
+        return usefulQuantity * getEffectiveUnitPrice();
+    }
+
+    public WasteLevel getWasteLevel() {
+        if (wastePercentage < 3.0) {
+            return WasteLevel.LOW;
+        }
+        if (wastePercentage <= 10.0) {
+            return WasteLevel.MEDIUM;
+        }
+        return WasteLevel.HIGH;
+    }
+
+    public boolean isLowStock() {
+        return isLowStock(2.0);
+    }
+
+    public boolean isLowStock(double threshold) {
+        return this.stockQuantity <= threshold;
+    }
+
+    public Long getDaysUntilExpiration() {
+        if (expirationDate == null) {
+            return null;
+        }
+        return ChronoUnit.DAYS.between(LocalDate.now(), expirationDate);
+    }
+
+    public boolean isExpiringSoon() {
+        return isExpiringSoon(7);
+    }
+
+    public boolean isExpiringSoon(int daysThreshold) {
+        Long days = getDaysUntilExpiration();
+        return days != null && days <= daysThreshold;
     }
 }
