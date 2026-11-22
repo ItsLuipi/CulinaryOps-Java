@@ -59,7 +59,7 @@ public class RecipesPanel extends JPanel {
     private final DefaultTableModel recipesModel;
     private final JTable recipesTable;
     private final DefaultTableModel detailModel;
-    private final JLabel detailHeaderLabel = new JLabel("Selecciona una receta para ver su escandallo");
+    private final JLabel detailHeaderLabel = new JLabel("Selecciona una receta para ver su detalle");
     private final JTextArea instructionsArea = new JTextArea(4, 40);
     private List<Recipe> displayed = List.of();
 
@@ -198,13 +198,13 @@ public class RecipesPanel extends JPanel {
         int row = recipesTable.getSelectedRow();
         detailModel.setRowCount(0);
         if (row < 0 || row >= displayed.size()) {
-            detailHeaderLabel.setText("Selecciona una receta para ver su escandallo");
+            detailHeaderLabel.setText("Selecciona una receta para ver su detalle");
             instructionsArea.setText("");
             return;
         }
         Recipe r = displayed.get(row);
         detailHeaderLabel.setText(String.format(Locale.US,
-                "Escandallo: %s | Total: %s | Costo/%s: %s | Masa neta: %.0f g",
+                "Receta: %s | Total: %s | Costo/%s: %s | Masa neta: %.0f g",
                 r.getName(),
                 CurrencyFormatter.formatUSD(r.calculateDirectCost()),
                 r.getYieldUnit(),
@@ -533,7 +533,7 @@ public class RecipesPanel extends JPanel {
         ingSection.setBorder(BorderFactory.createEmptyBorder(0, 18, 8, 18));
         JPanel ingHeader = new JPanel(new BorderLayout());
         ingHeader.setOpaque(false);
-        JLabel ingTitle = new JLabel("Ingredientes del Escandallo (sin repetidos):");
+        JLabel ingTitle = new JLabel("Ingredientes de la Receta:");
         ingTitle.setFont(CulinaryTheme.FONT_SUBTITLE);
         JButton addRowBtn = CulinaryTheme.createSecondaryButton("+ Añadir Ingrediente");
         addRowBtn.addActionListener(e -> addEmptyRow.run());

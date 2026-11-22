@@ -298,7 +298,7 @@ public class IngredientsPanel extends JPanel {
             wasteValueLabel.setText(String.format(Locale.US, "%.1f%%", wastePct));
 
             UnitType selectedUnit = (UnitType) unitBox.getSelectedItem();
-            String unitSym = selectedUnit != null ? selectedUnit.getSymbol() : "g";
+            String unitSym = selectedUnit != null ? selectedUnit.getSymbol() : "gr";
 
             String priceTxt = priceField.getText().trim();
             boolean validPrice = InputRegexValidator.isValidPositiveDecimal(priceTxt);
@@ -320,10 +320,10 @@ public class IngredientsPanel extends JPanel {
                 purchaseQtyFeedback.setText("Campo obligatorio (ej. 1000 para 1 kg, 500, 1).");
                 purchaseQtyFeedback.setForeground(CulinaryTheme.TEXT_SECONDARY);
             } else if (!validPurchaseQty) {
-                purchaseQtyFeedback.setText("⚠ Cantidad inválida. Usa número positivo > 0 (ej. 1000).");
+                purchaseQtyFeedback.setText("⚠ Presentación inválida. Usa número positivo > 0 (ej. 1000).");
                 purchaseQtyFeedback.setForeground(CulinaryTheme.ALERT_RED);
             } else {
-                purchaseQtyFeedback.setText("✓ Cantidad válida (" + purchaseQtyTxt + " " + unitSym + ")");
+                purchaseQtyFeedback.setText("✓ Presentación válida (" + purchaseQtyTxt + " " + unitSym + ")");
                 purchaseQtyFeedback.setForeground(CulinaryTheme.OK_GREEN);
             }
 
@@ -402,7 +402,7 @@ public class IngredientsPanel extends JPanel {
         gbc.gridx = 1;
         gbc.gridy = row++;
         form.add(priceFeedback, gbc);
-        addRow(form, gbc, row++, "Cantidad por Compra *:", purchaseQtyField);
+        addRow(form, gbc, row++, "Presentación por Compra *:", purchaseQtyField);
         gbc.gridx = 1;
         gbc.gridy = row++;
         form.add(purchaseQtyFeedback, gbc);

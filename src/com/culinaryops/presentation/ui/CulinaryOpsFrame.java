@@ -123,7 +123,7 @@ public class CulinaryOpsFrame extends JFrame {
         brand.setForeground(Color.WHITE);
         brand.setAlignmentX(LEFT_ALIGNMENT);
 
-        JLabel tagline = new JLabel("Pastelería · Escandallos · USD");
+        JLabel tagline = new JLabel("Pastelería · Recetas · USD");
         tagline.setFont(CulinaryTheme.FONT_SMALL);
         tagline.setForeground(new Color(0xB8, 0xB2, 0xA8));
         tagline.setAlignmentX(LEFT_ALIGNMENT);
@@ -133,7 +133,7 @@ public class CulinaryOpsFrame extends JFrame {
         sidebar.add(tagline);
         sidebar.add(Box.createVerticalStrut(24));
 
-        addNavButton(sidebar, CARD_DASHBOARD, "1. Obrador");
+        addNavButton(sidebar, CARD_DASHBOARD, "1. Resumen");
         addNavButton(sidebar, CARD_INGREDIENTS, "2. Ingredientes");
         addNavButton(sidebar, CARD_INVENTORY, "3. Inventario");
         addNavButton(sidebar, CARD_RECIPES, "4. Recetas");
