@@ -31,7 +31,7 @@ public class Recipe extends BaseEntity implements Costable {
             int prepTimeMinutes,
             String instructions,
             List<RecipeIngredient> ingredients) {
-        this(id, name, description, 0, yieldUnit, 0, instructions, ingredients, LocalDateTime.now(), LocalDateTime.now());
+        this(id, name, description, yieldQuantity, yieldUnit, prepTimeMinutes, instructions, ingredients, LocalDateTime.now(), LocalDateTime.now());
     }
     
     public Recipe(
