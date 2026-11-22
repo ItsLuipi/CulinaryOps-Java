@@ -8,13 +8,16 @@ import com.culinaryops.domain.model.Recipe;
 import com.culinaryops.domain.model.RecipeIngredient;
 import com.culinaryops.domain.model.enums.UnitType;
 import com.culinaryops.domain.service.CurrencyFormatter;
+import com.culinaryops.domain.service.IngredientValidator;
 import com.culinaryops.domain.service.InputRegexValidator;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -33,6 +36,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -265,27 +269,54 @@ public class RecipesPanel extends JPanel {
 
         JPanel form = new JPanel(new GridBagLayout());
         form.setBackground(CulinaryTheme.BG_CARD);
-        form.setBorder(BorderFactory.createEmptyBorder(14, 18, 6, 18));
+        form.setBorder(BorderFactory.createEmptyBorder(10, 18, 4, 18));
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(4, 6, 4, 6);
+        gbc.insets = new Insets(2, 6, 2, 6);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
 
         JTextField nameField = new JTextField(editing == null ? "" : editing.getName(), 26);
+        nameField.setBorder(CulinaryTheme.fieldBorder());
+        JLabel nameFeedback = new JLabel(" ");
+        nameFeedback.setFont(CulinaryTheme.FONT_SMALL);
+
         JTextField descField = new JTextField(editing == null ? "" : editing.getDescription(), 26);
+        descField.setBorder(CulinaryTheme.fieldBorder());
+
         JTextField yieldQtyField = new JTextField(editing == null ? "" : String.valueOf(editing.getYieldQuantity()), 8);
+        yieldQtyField.setBorder(CulinaryTheme.fieldBorder());
+        JLabel yieldFeedback = new JLabel(" ");
+        yieldFeedback.setFont(CulinaryTheme.FONT_SMALL);
+
         JTextField yieldUnitField = new JTextField(editing == null ? "porciones" : editing.getYieldUnit(), 12);
+        yieldUnitField.setBorder(CulinaryTheme.fieldBorder());
+        JLabel yieldUnitFeedback = new JLabel(" ");
+        yieldUnitFeedback.setFont(CulinaryTheme.FONT_SMALL);
+
         JTextField prepMinField = new JTextField(editing == null ? "45" : String.valueOf(editing.getPrepTimeMinutes()), 6);
-        JTextArea instrArea = new JTextArea(editing == null ? "" : editing.getInstructions(), 3, 26);
+        prepMinField.setBorder(CulinaryTheme.fieldBorder());
+        JLabel prepFeedback = new JLabel(" ");
+        prepFeedback.setFont(CulinaryTheme.FONT_SMALL);
+
+        JTextArea instrArea = new JTextArea(editing == null ? "" : editing.getInstructions(), 2, 26);
+        instrArea.setFont(CulinaryTheme.FONT_BODY);
         instrArea.setLineWrap(true);
         instrArea.setWrapStyleWord(true);
+        instrArea.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
+        JScrollPane instrScroll = new JScrollPane(instrArea);
+        instrScroll.setBorder(BorderFactory.createLineBorder(CulinaryTheme.BORDER_FLOUR, 1));
 
-        addRow(form, gbc, 0, "Nombre de la Receta *:", nameField);
-        addRow(form, gbc, 1, "Descripción:", descField);
-        addRow(form, gbc, 2, "Rendimiento *:", yieldQtyField);
-        addRow(form, gbc, 3, "Unidad de Rendimiento:", yieldUnitField);
-        addRow(form, gbc, 4, "Prep (Minutos):", prepMinField);
-        addRow(form, gbc, 5, "Instrucciones:", new JScrollPane(instrArea));
+        int row = 0;
+        addRow(form, gbc, row++, "Nombre de la Receta *:", nameField);
+        addFeedbackRow(form, gbc, row++, nameFeedback);
+        addRow(form, gbc, row++, "Descripción:", descField);
+        addRow(form, gbc, row++, "Rendimiento *:", yieldQtyField);
+        addFeedbackRow(form, gbc, row++, yieldFeedback);
+        addRow(form, gbc, row++, "Unidad Rendimiento:", yieldUnitField);
+        addFeedbackRow(form, gbc, row++, yieldUnitFeedback);
+        addRow(form, gbc, row++, "Prep (Minutos):", prepMinField);
+        addFeedbackRow(form, gbc, row++, prepFeedback);
+        addRow(form, gbc, row++, "Instrucciones:", instrScroll);
 
         // Filas dinámicas de ingredientes
         JPanel rowsContainer = new JPanel();
@@ -299,6 +330,7 @@ public class RecipesPanel extends JPanel {
         JLabel validationLabel = new JLabel(" ");
         validationLabel.setFont(CulinaryTheme.FONT_SMALL);
         JButton saveBtn = CulinaryTheme.createPrimaryButton("Guardar Receta");
+        dialog.getRootPane().setDefaultButton(saveBtn);
 
         List<Ingredient> catalog = catalogService.findAll().stream()
                 .sorted(Comparator.comparing(Ingredient::getCategory).thenComparing(Ingredient::getName))
@@ -306,9 +338,91 @@ public class RecipesPanel extends JPanel {
 
         Runnable[] recalcRef = new Runnable[1];
         recalcRef[0] = () -> {
+            // 1. Validar Nombre de la Receta (formato + unicidad)
+            String rawName = nameField.getText();
+            boolean validNameFormat = InputRegexValidator.isValidName(rawName);
+            String normalizedName = IngredientValidator.normalizeIngredientName(rawName);
+            String duplicateRecipeName = null;
+            if (validNameFormat && !normalizedName.isEmpty()) {
+                for (Recipe existing : recipeService.findAll()) {
+                    if (editing != null && existing.getId().equals(editing.getId())) {
+                        continue;
+                    }
+                    if (IngredientValidator.normalizeIngredientName(existing.getName()).equals(normalizedName)) {
+                        duplicateRecipeName = existing.getName();
+                        break;
+                    }
+                }
+            }
+            boolean nameOk = false;
+            if (rawName.trim().isEmpty()) {
+                nameFeedback.setText("Campo obligatorio.");
+                nameFeedback.setForeground(CulinaryTheme.TEXT_SECONDARY);
+            } else if (!validNameFormat) {
+                nameFeedback.setText("⚠ Nombre inválido (mín. 2 caracteres válidos).");
+                nameFeedback.setForeground(CulinaryTheme.ALERT_RED);
+            } else if (duplicateRecipeName != null) {
+                nameFeedback.setText("⚠ Ya existe una receta llamada '" + duplicateRecipeName + "'.");
+                nameFeedback.setForeground(CulinaryTheme.ALERT_RED);
+            } else {
+                nameFeedback.setText("✓ Nombre disponible");
+                nameFeedback.setForeground(CulinaryTheme.OK_GREEN);
+                nameOk = true;
+            }
+
+            // 2. Validar Rendimiento
+            String yieldTxt = yieldQtyField.getText().trim();
+            boolean validYield = false;
+            double yQty = 1.0;
+            if (yieldTxt.isEmpty()) {
+                yieldFeedback.setText("Campo obligatorio (ej. 8 o 12.5).");
+                yieldFeedback.setForeground(CulinaryTheme.TEXT_SECONDARY);
+            } else if (!InputRegexValidator.isValidPositiveDecimal(yieldTxt) || Double.parseDouble(yieldTxt) <= 0) {
+                yieldFeedback.setText("⚠ Rendimiento inválido. Usa decimal positivo mayor a 0 (ej. 8).");
+                yieldFeedback.setForeground(CulinaryTheme.ALERT_RED);
+            } else {
+                yQty = Double.parseDouble(yieldTxt);
+                yieldFeedback.setText("✓ Rendimiento válido");
+                yieldFeedback.setForeground(CulinaryTheme.OK_GREEN);
+                validYield = true;
+            }
+
+            // 3. Feedback Unidad de Rendimiento
+            String yUnitTxt = yieldUnitField.getText().trim();
+            boolean validYieldUnit = true;
+            if (yUnitTxt.isEmpty()) {
+                yieldUnitFeedback.setText("Opcional (si se deja vacío se usará 'porciones').");
+                yieldUnitFeedback.setForeground(CulinaryTheme.TEXT_SECONDARY);
+            } else if (!InputRegexValidator.isValidName(yUnitTxt)) {
+                yieldUnitFeedback.setText("⚠ Unidad inválida (mín. 2 caracteres válidos, ej. porciones).");
+                yieldUnitFeedback.setForeground(CulinaryTheme.ALERT_RED);
+                validYieldUnit = false;
+            } else {
+                yieldUnitFeedback.setText("✓ Unidad: " + yUnitTxt);
+                yieldUnitFeedback.setForeground(CulinaryTheme.OK_GREEN);
+            }
+
+            // 4. Validar Prep (Minutos)
+            String prepTxt = prepMinField.getText().trim();
+            boolean validPrep = false;
+            if (prepTxt.isEmpty()) {
+                prepFeedback.setText("Opcional (si se deja vacío se guardará 0 min).");
+                prepFeedback.setForeground(CulinaryTheme.TEXT_SECONDARY);
+                validPrep = true;
+            } else if (!prepTxt.matches("^\\d+$")) {
+                prepFeedback.setText("⚠ Tiempo inválido. Ingresa solo números enteros >= 0 (ej. 45).");
+                prepFeedback.setForeground(CulinaryTheme.ALERT_RED);
+            } else {
+                prepFeedback.setText("✓ Tiempo válido (" + prepTxt + " min)");
+                prepFeedback.setForeground(CulinaryTheme.OK_GREEN);
+                validPrep = true;
+            }
+
+            // 5. Validar filas de ingredientes y costo directo
             Set<String> seenIds = new HashSet<>();
             boolean hasDuplicate = false;
-            boolean allValidRows = !ingredientRows.isEmpty();
+            boolean hasInvalidRowQty = false;
+            boolean hasMissingRow = ingredientRows.isEmpty();
             double totalCost = 0.0;
 
             for (IngredientRow rowItem : ingredientRows) {
@@ -317,43 +431,58 @@ public class RecipesPanel extends JPanel {
                 String qtyTxt = rowItem.qtyField.getText().trim();
                 UnitType unit = (UnitType) rowItem.unitCombo.getSelectedItem();
 
-                if (ing == null || !InputRegexValidator.isValidPositiveDecimal(qtyTxt)) {
-                    allValidRows = false;
+                if (ing == null) {
+                    hasMissingRow = true;
+                    rowItem.setRowStatus("Selecciona un ingrediente del catálogo.", CulinaryTheme.TEXT_SECONDARY, false);
+                    continue;
+                }
+                if (qtyTxt.isEmpty()) {
+                    hasMissingRow = true;
+                    rowItem.setRowStatus("Ingresa cantidad > 0 (ej. 150).", CulinaryTheme.TEXT_SECONDARY, false);
+                    continue;
+                }
+                if (!InputRegexValidator.isValidPositiveDecimal(qtyTxt) || Double.parseDouble(qtyTxt) <= 0) {
+                    hasInvalidRowQty = true;
+                    rowItem.setRowStatus("⚠ Cantidad inválida. Usa decimal > 0 (ej. 150).", CulinaryTheme.ALERT_RED, true);
                     continue;
                 }
                 double q = Double.parseDouble(qtyTxt);
-                if (q <= 0) {
-                    allValidRows = false;
-                    continue;
-                }
                 if (!seenIds.add(ing.getId())) {
                     hasDuplicate = true;
+                    rowItem.setRowStatus("⚠ Ingrediente repetido en esta receta.", CulinaryTheme.ALERT_RED, false);
+                    continue;
                 }
-                totalCost += new RecipeIngredient(ing, unit, q).getSubtotalCost();
+                double sub = new RecipeIngredient(ing, unit, q).getSubtotalCost();
+                totalCost += sub;
+                rowItem.setRowStatus("✓ Subtotal: " + CurrencyFormatter.formatUSD(sub), CulinaryTheme.OK_GREEN, false);
             }
 
-            boolean validName = InputRegexValidator.isValidName(nameField.getText());
-            boolean validYield = InputRegexValidator.isValidPositiveDecimal(yieldQtyField.getText().trim())
-                    && Double.parseDouble(yieldQtyField.getText().trim()) > 0;
-            double yQty = validYield ? Double.parseDouble(yieldQtyField.getText().trim()) : 1.0;
-
-            liveSummary.setText(String.format(Locale.US, "Costo Directo: %s | Costo/Unidad: %s",
+            String unitLabel = yUnitTxt.isEmpty() ? "Unidad" : yUnitTxt;
+            liveSummary.setText(String.format(Locale.US, "Costo Directo: %s | Costo/%s: %s",
                     CurrencyFormatter.formatUSD(totalCost),
+                    unitLabel,
                     CurrencyFormatter.formatUSD(validYield ? totalCost / yQty : 0.0)));
+
+            boolean allRowsOk = !hasMissingRow && !hasInvalidRowQty && !hasDuplicate;
+            boolean formOk = nameOk && validYield && validYieldUnit && validPrep;
 
             if (hasDuplicate) {
                 validationLabel.setText("⚠ Hay ingredientes repetidos en la receta (cada insumo una sola vez).");
                 validationLabel.setForeground(CulinaryTheme.ALERT_RED);
-                saveBtn.setEnabled(false);
-            } else if (!validName || !validYield || !allValidRows) {
-                validationLabel.setText("Completa nombre, rendimiento > 0 e ingredientes con cantidad > 0.");
+            } else if (hasInvalidRowQty) {
+                validationLabel.setText("⚠ Hay cantidades inválidas en los ingredientes.");
+                validationLabel.setForeground(CulinaryTheme.ALERT_RED);
+            } else if (!formOk && (!rawName.trim().isEmpty() || !yieldTxt.isEmpty() || !prepTxt.matches("^\\d*$"))) {
+                validationLabel.setText("⚠ Corrige los campos marcados en rojo antes de guardar.");
+                validationLabel.setForeground(CulinaryTheme.ALERT_RED);
+            } else if (!formOk || hasMissingRow) {
+                validationLabel.setText("Completa los campos obligatorios (*) y al menos 1 ingrediente con cantidad > 0.");
                 validationLabel.setForeground(CulinaryTheme.TEXT_SECONDARY);
-                saveBtn.setEnabled(false);
             } else {
                 validationLabel.setText("✓ Receta lista para guardar");
                 validationLabel.setForeground(CulinaryTheme.OK_GREEN);
-                saveBtn.setEnabled(true);
             }
+            saveBtn.setEnabled(formOk && allRowsOk);
         };
 
         Runnable addEmptyRow = () -> {
@@ -396,6 +525,8 @@ public class RecipesPanel extends JPanel {
 
         nameField.getDocument().addDocumentListener(new DocListener(recalcRef[0]));
         yieldQtyField.getDocument().addDocumentListener(new DocListener(recalcRef[0]));
+        yieldUnitField.getDocument().addDocumentListener(new DocListener(recalcRef[0]));
+        prepMinField.getDocument().addDocumentListener(new DocListener(recalcRef[0]));
 
         JPanel ingSection = new JPanel(new BorderLayout(0, 6));
         ingSection.setBackground(CulinaryTheme.BG_CARD);
@@ -410,12 +541,13 @@ public class RecipesPanel extends JPanel {
         ingHeader.add(addRowBtn, BorderLayout.EAST);
 
         JScrollPane rowsScroll = new JScrollPane(rowsContainer);
-        rowsScroll.setPreferredSize(new Dimension(620, 170));
+        rowsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        rowsScroll.setBorder(BorderFactory.createLineBorder(CulinaryTheme.BORDER_FLOUR, 1));
+        rowsScroll.setPreferredSize(new Dimension(660, 150));
 
-        JPanel summaryBox = new JPanel();
-        summaryBox.setLayout(new BoxLayout(summaryBox, BoxLayout.Y_AXIS));
+        JPanel summaryBox = new JPanel(new GridLayout(2, 1, 0, 2));
         summaryBox.setOpaque(false);
-        summaryBox.add(Box.createVerticalStrut(6));
+        summaryBox.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 0));
         summaryBox.add(liveSummary);
         summaryBox.add(validationLabel);
 
@@ -443,8 +575,8 @@ public class RecipesPanel extends JPanel {
                     double qty = Double.parseDouble(rowItem.qtyField.getText().trim());
                     built.add(new RecipeIngredient(ing, u, qty));
                 }
-                int prep = prepMinField.getText().trim().matches("\\d+")
-                        ? Integer.parseInt(prepMinField.getText().trim()) : 60;
+                String prepTxt = prepMinField.getText().trim();
+                int prep = prepTxt.isEmpty() ? 0 : Integer.parseInt(prepTxt);
                 double yQty = Double.parseDouble(yieldQtyField.getText().trim());
 
                 if (editing == null) {
@@ -484,23 +616,32 @@ public class RecipesPanel extends JPanel {
         form.add(comp, gbc);
     }
 
+    private static void addFeedbackRow(JPanel form, GridBagConstraints gbc, int row, JLabel feedback) {
+        gbc.gridx = 1;
+        gbc.gridy = row;
+        gbc.weightx = 1.0;
+        form.add(feedback, gbc);
+    }
+
     private record IngredientItem(Ingredient ingredient) {
         @Override
         public String toString() {
             if (ingredient == null) {
                 return "-- Seleccionar ingrediente --";
             }
-            return "[" + ingredient.getCategory() + "] " + ingredient.getName()
+            return ingredient.getName()
                     + " (" + CurrencyFormatter.formatUSD(ingredient.getEffectiveUnitPrice())
                     + "/" + ingredient.getUnit().getSymbol() + ")";
         }
     }
 
     private static class IngredientRow {
-        final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 2));
+        final JPanel panel = new JPanel(new BorderLayout(0, 2));
         final JComboBox<IngredientItem> combo = new JComboBox<>();
         final JTextField qtyField = new JTextField(6);
-        final JComboBox<UnitType> unitCombo = new JComboBox<>(new UnitType[]{UnitType.G, UnitType.L, UnitType.U});
+        final JComboBox<UnitType> unitCombo = new JComboBox<>(
+                new UnitType[]{UnitType.G, UnitType.KG, UnitType.ML, UnitType.L, UnitType.U});
+        final JLabel statusLabel = new JLabel(" ");
 
         IngredientRow(
                 List<Ingredient> catalog,
@@ -510,6 +651,11 @@ public class RecipesPanel extends JPanel {
                 Runnable onChange,
                 java.util.function.Consumer<IngredientRow> onRemove) {
             panel.setBackground(CulinaryTheme.BG_CARD);
+            panel.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, CulinaryTheme.BORDER_FLOUR),
+                    BorderFactory.createEmptyBorder(4, 6, 4, 6)));
+
+            combo.setPreferredSize(new Dimension(280, 30));
             combo.addItem(new IngredientItem(null));
             IngredientItem match = null;
             for (Ingredient ing : catalog) {
@@ -524,12 +670,17 @@ public class RecipesPanel extends JPanel {
             }
             qtyField.setText(qty);
             qtyField.setBorder(CulinaryTheme.fieldBorder());
+            qtyField.setPreferredSize(new Dimension(74, 30));
             unitCombo.setSelectedItem(selectedUnit);
+            unitCombo.setPreferredSize(new Dimension(60, 30));
 
             combo.addActionListener(e -> {
                 IngredientItem item = (IngredientItem) combo.getSelectedItem();
                 if (item != null && item.ingredient != null) {
                     unitCombo.setSelectedItem(item.ingredient.getUnit());
+                    combo.setToolTipText("[" + item.ingredient.getCategory() + "] " + item.toString());
+                } else {
+                    combo.setToolTipText(null);
                 }
                 onChange.run();
             });
@@ -539,11 +690,32 @@ public class RecipesPanel extends JPanel {
             JButton removeBtn = CulinaryTheme.createSecondaryButton("Quitar");
             removeBtn.addActionListener(e -> onRemove.accept(this));
 
-            panel.add(combo);
-            panel.add(new JLabel("Cant:"));
-            panel.add(qtyField);
-            panel.add(unitCombo);
-            panel.add(removeBtn);
+            JPanel topControls = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+            topControls.setOpaque(false);
+            topControls.add(combo);
+            topControls.add(new JLabel("Cant:"));
+            topControls.add(qtyField);
+            topControls.add(unitCombo);
+            topControls.add(removeBtn);
+
+            statusLabel.setFont(CulinaryTheme.FONT_SMALL);
+            statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
+
+            panel.add(topControls, BorderLayout.NORTH);
+            panel.add(statusLabel, BorderLayout.SOUTH);
+            panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, panel.getPreferredSize().height + 6));
+        }
+
+        void setRowStatus(String text, Color color, boolean invalidQtyBorder) {
+            statusLabel.setText(text);
+            statusLabel.setForeground(color);
+            if (invalidQtyBorder) {
+                qtyField.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(CulinaryTheme.ALERT_RED, 1),
+                        BorderFactory.createEmptyBorder(6, 8, 6, 8)));
+            } else {
+                qtyField.setBorder(CulinaryTheme.fieldBorder());
+            }
         }
     }
 
