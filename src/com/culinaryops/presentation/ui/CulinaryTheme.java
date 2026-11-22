@@ -190,16 +190,30 @@ public final class CulinaryTheme {
     }
 
     public static DefaultTableCellRenderer rightMonoRenderer() {
+        return alignedRenderer(SwingConstants.RIGHT, true);
+    }
+
+    public static DefaultTableCellRenderer centerRenderer() {
+        return alignedRenderer(SwingConstants.CENTER, false);
+    }
+
+    public static DefaultTableCellRenderer centerMonoRenderer() {
+        return alignedRenderer(SwingConstants.CENTER, true);
+    }
+
+    private static DefaultTableCellRenderer alignedRenderer(int alignment, boolean mono) {
         return new DefaultTableCellRenderer() {
             {
-                setHorizontalAlignment(SwingConstants.RIGHT);
+                setHorizontalAlignment(alignment);
             }
 
             @Override
             public Component getTableCellRendererComponent(
                     JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 Component comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                comp.setFont(FONT_MONO);
+                if (mono) {
+                    comp.setFont(FONT_MONO);
+                }
                 return comp;
             }
         };

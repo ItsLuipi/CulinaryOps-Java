@@ -108,8 +108,22 @@ public class IngredientsPanel extends JPanel {
         table = new JTable(tableModel);
         CulinaryTheme.styleTable(table);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.getColumnModel().getColumn(4).setCellRenderer(CulinaryTheme.rightMonoRenderer());
-        table.getColumnModel().getColumn(6).setCellRenderer(CulinaryTheme.rightMonoRenderer());
+        var cols = table.getColumnModel();
+        cols.getColumn(0).setPreferredWidth(160);
+        cols.getColumn(1).setPreferredWidth(140);
+        cols.getColumn(2).setPreferredWidth(92);
+        cols.getColumn(2).setMinWidth(88);
+        cols.getColumn(2).setCellRenderer(CulinaryTheme.centerRenderer());
+        cols.getColumn(3).setPreferredWidth(180);
+        cols.getColumn(3).setMinWidth(170);
+        cols.getColumn(4).setPreferredWidth(112);
+        cols.getColumn(4).setCellRenderer(CulinaryTheme.centerMonoRenderer());
+        cols.getColumn(5).setPreferredWidth(124);
+        cols.getColumn(5).setCellRenderer(CulinaryTheme.centerRenderer());
+        cols.getColumn(6).setPreferredWidth(112);
+        cols.getColumn(6).setCellRenderer(CulinaryTheme.centerMonoRenderer());
+        cols.getColumn(7).setPreferredWidth(110);
+        cols.getColumn(7).setCellRenderer(CulinaryTheme.centerRenderer());
         add(CulinaryTheme.wrapTable(table), BorderLayout.CENTER);
 
         // Barra inferior de acciones sobre fila seleccionada
