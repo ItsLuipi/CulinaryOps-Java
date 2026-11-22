@@ -7,6 +7,9 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.KeyEvent;
 import java.util.Locale;
 import javax.swing.BorderFactory;
@@ -16,10 +19,12 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSlider;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.border.Border;
+import javax.swing.plaf.basic.BasicSliderUI;
 import javax.swing.table.DefaultTableCellRenderer;
 
 /**
@@ -87,7 +92,62 @@ public final class CulinaryTheme {
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setOpaque(true);
         btn.setContentAreaFilled(true);
+        btn.addPropertyChangeListener("enabled", evt -> {
+            if (btn.isEnabled()) {
+                btn.setBackground(ACCENT_APRICOT);
+                btn.setForeground(Color.WHITE);
+            } else {
+                btn.setBackground(BORDER_FLOUR);
+                btn.setForeground(TEXT_SECONDARY);
+            }
+        });
         return btn;
+    }
+
+    public static JSlider createStyledSlider(int min, int max, int value) {
+        JSlider slider = new JSlider(min, max, value);
+        slider.setBackground(BG_CARD);
+        slider.setOpaque(false);
+        slider.setFocusable(true);
+        slider.setUI(new BasicSliderUI(slider) {
+            @Override
+            public void paintTrack(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int trackY = trackRect.y + (trackRect.height - 6) / 2;
+                g2.setColor(BORDER_FLOUR);
+                g2.fillRoundRect(trackRect.x, trackY, trackRect.width, 6, 6, 6);
+
+                int fillWidth = thumbRect.x + thumbRect.width / 2 - trackRect.x;
+                if (fillWidth > 0) {
+                    g2.setColor(ACCENT_APRICOT);
+                    g2.fillRoundRect(trackRect.x, trackY, Math.min(fillWidth, trackRect.width), 6, 6, 6);
+                }
+                g2.dispose();
+            }
+
+            @Override
+            public void paintThumb(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int size = 16;
+                int x = thumbRect.x + (thumbRect.width - size) / 2;
+                int y = thumbRect.y + (thumbRect.height - size) / 2;
+                g2.setColor(ACCENT_APRICOT);
+                g2.fillOval(x, y, size, size);
+                g2.setColor(Color.WHITE);
+                g2.drawOval(x + 1, y + 1, size - 2, size - 2);
+                g2.setColor(ACCENT_APRICOT_HOVER);
+                g2.drawOval(x, y, size, size);
+                g2.dispose();
+            }
+
+            @Override
+            protected Dimension getThumbSize() {
+                return new Dimension(18, 18);
+            }
+        });
+        return slider;
     }
 
     public static JButton createSecondaryButton(String text) {

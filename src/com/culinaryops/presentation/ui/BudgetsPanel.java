@@ -330,7 +330,7 @@ public class BudgetsPanel extends JPanel {
         JTextField equipField = new JTextField("5.0", 6);
         JTextField packField = new JTextField("12.0", 6);
 
-        JSlider marginSlider = new JSlider(0, 100, 30);
+        JSlider marginSlider = CulinaryTheme.createStyledSlider(0, 100, 30);
         JLabel marginValLabel = new JLabel("30%");
         JTextField taxField = new JTextField("0.0", 6);
 

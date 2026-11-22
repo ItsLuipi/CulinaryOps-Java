@@ -1,8 +1,10 @@
 package com.culinaryops.presentation.ui;
 
 import com.culinaryops.application.CatalogService;
+import com.culinaryops.application.InventoryService;
 import com.culinaryops.domain.exception.CulinaryDomainException;
 import com.culinaryops.domain.model.Ingredient;
+import com.culinaryops.domain.model.enums.StockMovementType;
 import com.culinaryops.domain.model.enums.UnitType;
 import com.culinaryops.domain.service.CurrencyFormatter;
 import com.culinaryops.domain.service.IngredientValidator;
@@ -13,6 +15,8 @@ import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -40,6 +44,7 @@ import javax.swing.table.DefaultTableModel;
 public class IngredientsPanel extends JPanel {
 
     private final CatalogService catalogService;
+    private final InventoryService inventoryService;
     private final Runnable onDataChanged;
     private final Runnable onGoToInventory;
 
@@ -52,9 +57,11 @@ public class IngredientsPanel extends JPanel {
 
     public IngredientsPanel(
             CatalogService catalogService,
+            InventoryService inventoryService,
             Runnable onDataChanged,
             Runnable onGoToInventory) {
         this.catalogService = catalogService;
+        this.inventoryService = inventoryService;
         this.onDataChanged = onDataChanged;
         this.onGoToInventory = onGoToInventory;
 
@@ -252,11 +259,14 @@ public class IngredientsPanel extends JPanel {
         JTextField priceField = new JTextField(
                 editing == null ? "" : String.valueOf(editing.getUnitPrice()), 12);
         priceField.setBorder(CulinaryTheme.fieldBorder());
+        JLabel priceFeedback = new JLabel(" ");
+        priceFeedback.setFont(CulinaryTheme.FONT_SMALL);
 
         // Slider 0.0% a 50.0% con paso 0.5% (representado 0..100 en enteros)
         int initialSteps = editing == null ? 0 : (int) Math.round(Math.min(50.0, editing.getWastePercentage()) * 2);
-        JSlider wasteSlider = new JSlider(0, 100, initialSteps);
+        JSlider wasteSlider = CulinaryTheme.createStyledSlider(0, 100, initialSteps);
         JLabel wasteValueLabel = new JLabel();
+        wasteValueLabel.setFont(CulinaryTheme.FONT_MONO_BOLD);
         JLabel effectivePreview = new JLabel();
         effectivePreview.setFont(CulinaryTheme.FONT_MONO_BOLD);
         effectivePreview.setForeground(CulinaryTheme.ACCENT_APRICOT);
@@ -264,6 +274,17 @@ public class IngredientsPanel extends JPanel {
         JCheckBox perishableCheck = new JCheckBox("Es un ingrediente perecedero",
                 editing != null && editing.isPerishable());
         perishableCheck.setBackground(CulinaryTheme.BG_CARD);
+
+        JLabel expDateRowLabel = new JLabel("Fecha Vencimiento (YYYY-MM-DD):");
+        expDateRowLabel.setFont(CulinaryTheme.FONT_BODY_BOLD);
+        expDateRowLabel.setForeground(CulinaryTheme.TEXT_PRIMARY);
+        JTextField expDateField = new JTextField(
+                (editing != null && editing.getExpirationDate() != null)
+                        ? editing.getExpirationDate().toString() : "", 14);
+        expDateField.setBorder(CulinaryTheme.fieldBorder());
+        expDateField.setToolTipText("Opcional: formato YYYY-MM-DD (ej. 2026-12-15)");
+        JLabel expDateFeedback = new JLabel(" ");
+        expDateFeedback.setFont(CulinaryTheme.FONT_SMALL);
 
         JButton saveBtn = CulinaryTheme.createPrimaryButton("Guardar");
         JButton cancelBtn = CulinaryTheme.createSecondaryButton("Cancelar");
@@ -280,39 +301,72 @@ public class IngredientsPanel extends JPanel {
 
             String priceTxt = priceField.getText().trim();
             boolean validPrice = InputRegexValidator.isValidPositiveDecimal(priceTxt);
-            if (validPrice) {
+            if (priceTxt.isEmpty()) {
+                priceFeedback.setText("Campo obligatorio (ej. 0.0032).");
+                priceFeedback.setForeground(CulinaryTheme.TEXT_SECONDARY);
+                effectivePreview.setText("Costo Real Útil: ingresa precio válido (ej. 0.0032)");
+            } else if (!validPrice) {
+                priceFeedback.setText("⚠ Precio inválido. Usa decimal positivo hasta 4 decimales (ej. 0.0032).");
+                priceFeedback.setForeground(CulinaryTheme.ALERT_RED);
+                effectivePreview.setText("Costo Real Útil: precio inválido");
+            } else {
+                priceFeedback.setText("✓ Precio válido");
+                priceFeedback.setForeground(CulinaryTheme.OK_GREEN);
                 double p = Double.parseDouble(priceTxt);
                 double eff = p / (1.0 - wastePct / 100.0);
                 UnitType u = (UnitType) unitBox.getSelectedItem();
                 effectivePreview.setText("Costo Real Útil: " + CurrencyFormatter.formatUSD(eff)
                         + "/" + (u != null ? u.getSymbol() : "g"));
-            } else {
-                effectivePreview.setText("Costo Real Útil: ingresa precio válido (ej. 0.0032)");
             }
 
+            boolean perishable = perishableCheck.isSelected();
+            expDateRowLabel.setVisible(perishable);
+            expDateField.setVisible(perishable);
+            expDateFeedback.setVisible(perishable);
+
+            boolean validDate = true;
+            if (perishable) {
+                String dateTxt = expDateField.getText().trim();
+                if (dateTxt.isEmpty()) {
+                    expDateFeedback.setText("Opcional (formato YYYY-MM-DD, o asígnala luego en Inventario).");
+                    expDateFeedback.setForeground(CulinaryTheme.TEXT_SECONDARY);
+                } else if (!isValidCalendarIsoDate(dateTxt)) {
+                    expDateFeedback.setText("⚠ Fecha inválida. Usa formato YYYY-MM-DD (ej. 2026-12-01).");
+                    expDateFeedback.setForeground(CulinaryTheme.ALERT_RED);
+                    validDate = false;
+                } else {
+                    expDateFeedback.setText("✓ Fecha válida");
+                    expDateFeedback.setForeground(CulinaryTheme.OK_GREEN);
+                }
+            }
+
+            boolean nameOk = false;
             if (rawName.trim().isEmpty()) {
                 nameFeedback.setText("Campo obligatorio.");
                 nameFeedback.setForeground(CulinaryTheme.TEXT_SECONDARY);
-                saveBtn.setEnabled(false);
             } else if (!validName) {
                 nameFeedback.setText("⚠ Nombre inválido (mín. 2 caracteres válidos).");
                 nameFeedback.setForeground(CulinaryTheme.ALERT_RED);
-                saveBtn.setEnabled(false);
             } else if (dup.isPresent()) {
                 nameFeedback.setText("⚠ Ya existe '" + dup.get().getName() + "'. Suma stock en Inventario.");
                 nameFeedback.setForeground(CulinaryTheme.ALERT_RED);
-                saveBtn.setEnabled(false);
             } else {
                 nameFeedback.setText("✓ Nombre disponible");
                 nameFeedback.setForeground(CulinaryTheme.OK_GREEN);
-                saveBtn.setEnabled(validPrice);
+                nameOk = true;
             }
+            saveBtn.setEnabled(nameOk && validPrice && validDate);
         };
 
         nameField.getDocument().addDocumentListener(new SimpleDocListener(updateLiveState));
         priceField.getDocument().addDocumentListener(new SimpleDocListener(updateLiveState));
+        expDateField.getDocument().addDocumentListener(new SimpleDocListener(updateLiveState));
         wasteSlider.addChangeListener(e -> updateLiveState.run());
         unitBox.addActionListener(e -> updateLiveState.run());
+        perishableCheck.addActionListener(e -> {
+            updateLiveState.run();
+            dialog.pack();
+        });
 
         int row = 0;
         addRow(form, gbc, row++, "Nombre del Ingrediente *:", nameField);
@@ -322,6 +376,9 @@ public class IngredientsPanel extends JPanel {
         addRow(form, gbc, row++, "Categoría *:", categoryBox);
         addRow(form, gbc, row++, "Unidad Base:", unitBox);
         addRow(form, gbc, row++, "Precio Compra (USD) *:", priceField);
+        gbc.gridx = 1;
+        gbc.gridy = row++;
+        form.add(priceFeedback, gbc);
 
         JPanel sliderBox = new JPanel(new BorderLayout(8, 0));
         sliderBox.setOpaque(false);
@@ -334,8 +391,21 @@ public class IngredientsPanel extends JPanel {
         form.add(effectivePreview, gbc);
 
         gbc.gridx = 1;
-        gbc.gridy = row;
+        gbc.gridy = row++;
         form.add(perishableCheck, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        gbc.weightx = 0.0;
+        form.add(expDateRowLabel, gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        form.add(expDateField, gbc);
+        row++;
+
+        gbc.gridx = 1;
+        gbc.gridy = row;
+        form.add(expDateFeedback, gbc);
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 12));
         buttons.setBackground(CulinaryTheme.BG_MAIN);
@@ -349,11 +419,17 @@ public class IngredientsPanel extends JPanel {
                 double price = Double.parseDouble(priceField.getText().trim());
                 double waste = wasteSlider.getValue() / 2.0;
                 boolean perishable = perishableCheck.isSelected();
+                String dateTxt = expDateField.getText().trim();
+                LocalDate expDate = (perishable && !dateTxt.isEmpty()) ? LocalDate.parse(dateTxt) : null;
 
+                Ingredient saved;
                 if (editing == null) {
-                    catalogService.createIngredient(name, cat, unit, price, waste, perishable);
+                    saved = catalogService.createIngredient(name, cat, unit, price, waste, perishable);
                 } else {
-                    catalogService.updateIngredient(editing.getId(), name, cat, unit, price, waste, perishable);
+                    saved = catalogService.updateIngredient(editing.getId(), name, cat, unit, price, waste, perishable);
+                }
+                if (expDate != null) {
+                    inventoryService.applyMovement(saved.getId(), StockMovementType.ADD, 0.0, null, expDate);
                 }
                 dialog.dispose();
                 refreshData();
@@ -371,6 +447,18 @@ public class IngredientsPanel extends JPanel {
         dialog.pack();
         dialog.setLocationRelativeTo(owner);
         dialog.setVisible(true);
+    }
+
+    private static boolean isValidCalendarIsoDate(String text) {
+        if (!InputRegexValidator.isValidIsoDate(text)) {
+            return false;
+        }
+        try {
+            LocalDate.parse(text);
+            return true;
+        } catch (DateTimeParseException ex) {
+            return false;
+        }
     }
 
     private static void addRow(JPanel form, GridBagConstraints gbc, int row, String label, java.awt.Component comp) {
