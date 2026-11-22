@@ -222,7 +222,7 @@ public class RecipesPanel extends JPanel {
                     CurrencyFormatter.formatUSD(item.getSubtotalCost())
             });
         }
-        instructionsArea.setText(r.getInstructions().isEmpty() ? "(Sin instrucciones registradas)" : r.getInstructions());
+        instructionsArea.setText(r.getInstructions().isEmpty() ? "(Sin preparación registrada)" : r.getInstructions());
     }
 
     private void editSelected() {
@@ -316,7 +316,7 @@ public class RecipesPanel extends JPanel {
         addFeedbackRow(form, gbc, row++, yieldUnitFeedback);
         addRow(form, gbc, row++, "Prep (Minutos):", prepMinField);
         addFeedbackRow(form, gbc, row++, prepFeedback);
-        addRow(form, gbc, row++, "Instrucciones:", instrScroll);
+        addRow(form, gbc, row++, "Preparación:", instrScroll);
 
         // Filas dinámicas de ingredientes
         JPanel rowsContainer = new JPanel();
