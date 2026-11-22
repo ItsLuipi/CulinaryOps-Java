@@ -83,7 +83,7 @@ public class InMemoryIngredientRepository implements IIngredientRepository {
         save(new Ingredient("ing-6", "Fresas / Frutillas seleccionadas", "Frutas y Frescos",
                 UnitType.Gr, 4.80, 1000.0, 3000.0, 18.0, true, today.plusDays(3), now, now));
         save(new Ingredient("ing-7", "Crema de leche / Nata 35% MG", "Lácteos y Grasas",
-                UnitType.Lt, 4.50, 1.0, 5.0, 4.0, true, today.plusDays(5), now, now));
+                UnitType.ML, 4.50, 1000.0, 5000.0, 4.0, true, today.plusDays(5), now, now));
         save(new Ingredient("ing-8", "Extracto de vainilla natural", "Aromas y Esencias",
                 UnitType.Gr, 12.00, 100.0, 250.0, 2.0, false, null, now, now));
     }

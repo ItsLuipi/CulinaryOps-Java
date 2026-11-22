@@ -1,6 +1,7 @@
 package com.culinaryops.presentation.ui;
 
 import com.culinaryops.domain.model.Ingredient;
+import com.culinaryops.domain.model.enums.UnitType;
 import com.culinaryops.domain.model.enums.WasteLevel;
 import java.awt.Color;
 import java.awt.Component;
@@ -13,10 +14,12 @@ import java.awt.RenderingHints;
 import java.awt.event.KeyEvent;
 import java.util.Locale;
 import javax.swing.BorderFactory;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
@@ -215,6 +218,20 @@ public final class CulinaryTheme {
                     comp.setFont(FONT_MONO);
                 }
                 return comp;
+            }
+        };
+    }
+
+    public static DefaultListCellRenderer unitSymbolRenderer() {
+        return new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(
+                    JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof UnitType unit) {
+                    setText(unit.getSymbol());
+                }
+                return this;
             }
         };
     }

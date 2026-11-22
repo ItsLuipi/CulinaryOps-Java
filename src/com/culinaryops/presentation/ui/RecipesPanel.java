@@ -640,7 +640,7 @@ public class RecipesPanel extends JPanel {
         final JComboBox<IngredientItem> combo = new JComboBox<>();
         final JTextField qtyField = new JTextField(6);
         final JComboBox<UnitType> unitCombo = new JComboBox<>(
-                new UnitType[]{UnitType.Gr, UnitType.KG, UnitType.ML, UnitType.Lt, UnitType.Und});
+                new UnitType[]{UnitType.Gr, UnitType.ML, UnitType.Und});
         final JLabel statusLabel = new JLabel(" ");
 
         IngredientRow(
@@ -671,6 +671,7 @@ public class RecipesPanel extends JPanel {
             qtyField.setText(qty);
             qtyField.setBorder(CulinaryTheme.fieldBorder());
             qtyField.setPreferredSize(new Dimension(74, 30));
+            unitCombo.setRenderer(CulinaryTheme.unitSymbolRenderer());
             unitCombo.setSelectedItem(selectedUnit);
             unitCombo.setPreferredSize(new Dimension(60, 30));
 

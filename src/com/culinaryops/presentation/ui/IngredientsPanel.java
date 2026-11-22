@@ -240,7 +240,8 @@ public class IngredientsPanel extends JPanel {
             categoryBox.setSelectedItem(editing.getCategory());
         }
 
-        JComboBox<UnitType> unitBox = new JComboBox<>(new UnitType[]{UnitType.Gr, UnitType.Lt, UnitType.Und});
+        JComboBox<UnitType> unitBox = new JComboBox<>(new UnitType[]{UnitType.Gr, UnitType.ML, UnitType.Und});
+        unitBox.setRenderer(CulinaryTheme.unitSymbolRenderer());
         if (editing != null) {
             unitBox.setSelectedItem(editing.getUnit());
         }

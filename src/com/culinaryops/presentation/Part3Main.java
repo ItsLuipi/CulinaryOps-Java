@@ -116,7 +116,7 @@ public class Part3Main {
                 new Ingredient("ing-4", "Mantequilla sin sal 82% MG", "Lácteos y Grasas", UnitType.Gr, 0.0085, 6000, 3.0, true, today.plusDays(20), now, now),
                 new Ingredient("ing-5", "Chocolate Cobertura 70% Cacao", "Chocolates y Coberturas", UnitType.Gr, 0.014, 8500, 5.0, false, null, now, now),
                 new Ingredient("ing-6", "Fresas / Frutillas seleccionadas", "Frutas y Frescos", UnitType.Gr, 0.0048, 3000, 18.0, true, today.plusDays(3), now, now),
-                new Ingredient("ing-7", "Crema de leche / Nata 35% MG", "Lácteos y Grasas", UnitType.Lt, 4.50, 5.0, 4.0, true, today.plusDays(5), now, now),
+                new Ingredient("ing-7", "Crema de leche / Nata 35% MG", "Lácteos y Grasas", UnitType.ML, 0.0045, 5000.0, 4.0, true, today.plusDays(5), now, now),
                 new Ingredient("ing-8", "Extracto de vainilla natural", "Aromas y Esencias", UnitType.Gr, 0.12, 250, 2.0, false, null, now, now)
         );
     }

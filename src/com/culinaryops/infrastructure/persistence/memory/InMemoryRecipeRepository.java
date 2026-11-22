@@ -112,7 +112,7 @@ public class InMemoryRecipeRepository implements IRecipeRepository {
                         + "3. Incorporar la mantequilla en cubos. 4. Decorar con fresas frescas al enfriar.",
                 List.of(
                         requireItem(ingredientRepo, "ing-5", UnitType.Gr, 350.0),
-                        requireItem(ingredientRepo, "ing-7", UnitType.Lt, 0.3),
+                        requireItem(ingredientRepo, "ing-7", UnitType.ML, 300.0),
                         requireItem(ingredientRepo, "ing-4", UnitType.Gr, 50.0),
                         requireItem(ingredientRepo, "ing-6", UnitType.Gr, 250.0)
                 ),
