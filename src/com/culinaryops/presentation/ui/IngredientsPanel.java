@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -46,9 +45,7 @@ public class IngredientsPanel extends JPanel {
     private final CatalogService catalogService;
     private final InventoryService inventoryService;
     private final Runnable onDataChanged;
-    private final Runnable onGoToInventory;
 
-    private final JLabel bannerStats = new JLabel();
     private final JTextField searchField = new JTextField(20);
     private final JComboBox<String> categoryFilter = new JComboBox<>();
     private final DefaultTableModel tableModel;
@@ -58,12 +55,10 @@ public class IngredientsPanel extends JPanel {
     public IngredientsPanel(
             CatalogService catalogService,
             InventoryService inventoryService,
-            Runnable onDataChanged,
-            Runnable onGoToInventory) {
+            Runnable onDataChanged) {
         this.catalogService = catalogService;
         this.inventoryService = inventoryService;
         this.onDataChanged = onDataChanged;
-        this.onGoToInventory = onGoToInventory;
 
         setLayout(new BorderLayout(0, 12));
         setBackground(CulinaryTheme.BG_MAIN);
@@ -83,26 +78,6 @@ public class IngredientsPanel extends JPanel {
         header.add(title, BorderLayout.WEST);
         header.add(newBtn, BorderLayout.EAST);
 
-        // Banner explicativo + enlace a Inventario
-        JPanel banner = CulinaryTheme.createCardPanel();
-        banner.setLayout(new BorderLayout(12, 0));
-        JPanel bannerText = new JPanel();
-        bannerText.setLayout(new BoxLayout(bannerText, BoxLayout.Y_AXIS));
-        bannerText.setOpaque(false);
-        JLabel ruleNote = new JLabel(
-                "Regla de separación: aquí defines la ficha técnica y merma individual. "
-                + "Para sumar existencias o fechas de lote, registra movimientos en Inventario.");
-        ruleNote.setFont(CulinaryTheme.FONT_BODY);
-        ruleNote.setForeground(CulinaryTheme.TEXT_ACCESSIBLE);
-        bannerStats.setFont(CulinaryTheme.FONT_SMALL.deriveFont(java.awt.Font.BOLD));
-        bannerStats.setForeground(CulinaryTheme.TEXT_SECONDARY);
-        bannerText.add(ruleNote);
-        bannerText.add(bannerStats);
-        JButton goStockBtn = CulinaryTheme.createSecondaryButton("Ir a Stock ->");
-        goStockBtn.addActionListener(e -> onGoToInventory.run());
-        banner.add(bannerText, BorderLayout.CENTER);
-        banner.add(goStockBtn, BorderLayout.EAST);
-
         // Filtros
         JPanel filters = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         filters.setOpaque(false);
@@ -117,7 +92,6 @@ public class IngredientsPanel extends JPanel {
         filters.add(categoryFilter);
 
         top.add(header, BorderLayout.NORTH);
-        top.add(banner, BorderLayout.CENTER);
         top.add(filters, BorderLayout.SOUTH);
         add(top, BorderLayout.NORTH);
 
@@ -164,8 +138,6 @@ public class IngredientsPanel extends JPanel {
         if (previousCat != null) {
             categoryFilter.setSelectedItem(previousCat);
         }
-        bannerStats.setText("Ingredientes registrados: " + catalogService.findAll().size()
-                + "   |   Categorías activas: " + cats.size());
         applyFilter();
     }
 

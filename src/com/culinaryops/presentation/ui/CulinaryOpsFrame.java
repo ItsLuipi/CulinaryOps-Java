@@ -66,8 +66,7 @@ public class CulinaryOpsFrame extends JFrame {
         this.ingredientsPanel = new IngredientsPanel(
                 catalogService,
                 inventoryService,
-                refreshAll,
-                () -> showModule(CARD_INVENTORY));
+                refreshAll);
         this.inventoryPanel = new InventoryPanel(
                 inventoryService,
                 catalogService,
