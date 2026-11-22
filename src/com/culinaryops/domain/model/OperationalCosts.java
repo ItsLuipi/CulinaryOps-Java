@@ -1,6 +1,5 @@
 package com.culinaryops.domain.model;
 
-import com.culinaryops.domain.contract.Costable;
 import java.util.Objects;
 
 /**

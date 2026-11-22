@@ -1,6 +1,5 @@
 package com.culinaryops.domain.model;
 
-import com.culinaryops.domain.contract.Costable;
 import com.culinaryops.domain.model.dto.ClientQuoteDTO;
 import com.culinaryops.domain.model.enums.BudgetStatus;
 
