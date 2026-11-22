@@ -71,20 +71,20 @@ public class InMemoryIngredientRepository implements IIngredientRepository {
         LocalDateTime now = LocalDateTime.now();
 
         save(new Ingredient("ing-1", "Huevos de campo", "Lácteos y Huevos",
-                UnitType.G, 0.0032, 12500.0, 15.0, true, today.plusDays(7), now, now));
+                UnitType.Gr, 3.20, 1000.0, 12500.0, 15.0, true, today.plusDays(7), now, now));
         save(new Ingredient("ing-2", "Azúcar común refinada", "Secos y Endulzantes",
-                UnitType.G, 0.0014, 35000.0, 1.0, false, null, now, now));
+                UnitType.Gr, 1.40, 1000.0, 35000.0, 1.0, false, null, now, now));
         save(new Ingredient("ing-3", "Harina 0000 de repostería", "Harinas y Almidones",
-                UnitType.G, 0.0011, 40000.0, 2.0, false, null, now, now));
+                UnitType.Gr, 1.10, 1000.0, 40000.0, 2.0, false, null, now, now));
         save(new Ingredient("ing-4", "Mantequilla sin sal 82% MG", "Lácteos y Grasas",
-                UnitType.G, 0.0085, 6000.0, 3.0, true, today.plusDays(20), now, now));
+                UnitType.Gr, 4.25, 500.0, 6000.0, 3.0, true, today.plusDays(20), now, now));
         save(new Ingredient("ing-5", "Chocolate Cobertura 70% Cacao", "Chocolates y Coberturas",
-                UnitType.G, 0.014, 8500.0, 5.0, false, null, now, now));
+                UnitType.Gr, 14.00, 1000.0, 8500.0, 5.0, false, null, now, now));
         save(new Ingredient("ing-6", "Fresas / Frutillas seleccionadas", "Frutas y Frescos",
-                UnitType.G, 0.0048, 3000.0, 18.0, true, today.plusDays(3), now, now));
+                UnitType.Gr, 4.80, 1000.0, 3000.0, 18.0, true, today.plusDays(3), now, now));
         save(new Ingredient("ing-7", "Crema de leche / Nata 35% MG", "Lácteos y Grasas",
-                UnitType.L, 4.50, 5.0, 4.0, true, today.plusDays(5), now, now));
+                UnitType.Lt, 4.50, 1.0, 5.0, 4.0, true, today.plusDays(5), now, now));
         save(new Ingredient("ing-8", "Extracto de vainilla natural", "Aromas y Esencias",
-                UnitType.G, 0.12, 250.0, 2.0, false, null, now, now));
+                UnitType.Gr, 12.00, 100.0, 250.0, 2.0, false, null, now, now));
     }
 }

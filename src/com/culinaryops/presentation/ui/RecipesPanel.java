@@ -486,7 +486,7 @@ public class RecipesPanel extends JPanel {
         };
 
         Runnable addEmptyRow = () -> {
-            IngredientRow r = new IngredientRow(catalog, null, UnitType.G, "", () -> {
+            IngredientRow r = new IngredientRow(catalog, null, UnitType.Gr, "", () -> {
                 recalcRef[0].run();
             }, rowToRemove -> {
                 if (ingredientRows.size() > 1) {
@@ -640,7 +640,7 @@ public class RecipesPanel extends JPanel {
         final JComboBox<IngredientItem> combo = new JComboBox<>();
         final JTextField qtyField = new JTextField(6);
         final JComboBox<UnitType> unitCombo = new JComboBox<>(
-                new UnitType[]{UnitType.G, UnitType.KG, UnitType.ML, UnitType.L, UnitType.U});
+                new UnitType[]{UnitType.Gr, UnitType.KG, UnitType.ML, UnitType.Lt, UnitType.Und});
         final JLabel statusLabel = new JLabel(" ");
 
         IngredientRow(

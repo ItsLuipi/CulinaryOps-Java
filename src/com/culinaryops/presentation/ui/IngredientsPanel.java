@@ -97,8 +97,8 @@ public class IngredientsPanel extends JPanel {
 
         // Tabla de ficha técnica
         tableModel = new DefaultTableModel(new String[]{
-                "Ingrediente", "Categoría", "Unidad Base", "Precio Compra",
-                "Merma Individual", "Costo Real Útil", "Conservación"
+                "Ingrediente", "Categoría", "Unidad Base", "Compra (Precio / Cant.)",
+                "Precio Unitario", "Merma Individual", "Costo Real Útil", "Conservación"
         }, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -108,8 +108,8 @@ public class IngredientsPanel extends JPanel {
         table = new JTable(tableModel);
         CulinaryTheme.styleTable(table);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.getColumnModel().getColumn(3).setCellRenderer(CulinaryTheme.rightMonoRenderer());
-        table.getColumnModel().getColumn(5).setCellRenderer(CulinaryTheme.rightMonoRenderer());
+        table.getColumnModel().getColumn(4).setCellRenderer(CulinaryTheme.rightMonoRenderer());
+        table.getColumnModel().getColumn(6).setCellRenderer(CulinaryTheme.rightMonoRenderer());
         add(CulinaryTheme.wrapTable(table), BorderLayout.CENTER);
 
         // Barra inferior de acciones sobre fila seleccionada
@@ -146,10 +146,13 @@ public class IngredientsPanel extends JPanel {
         displayedIngredients = catalogService.search(searchField.getText(), cat);
         tableModel.setRowCount(0);
         for (Ingredient ing : displayedIngredients) {
+            String purchaseSummary = CurrencyFormatter.formatUSD(ing.getPurchasePrice())
+                    + " / " + formatPlainNumber(ing.getPurchaseQuantity()) + " " + ing.getUnit().getSymbol();
             tableModel.addRow(new Object[]{
                     ing.getName(),
                     ing.getCategory(),
                     ing.getUnit().getSymbol(),
+                    purchaseSummary,
                     CurrencyFormatter.formatUSD(ing.getUnitPrice()),
                     CulinaryTheme.formatWasteBadge(ing),
                     CurrencyFormatter.formatUSD(ing.getEffectiveUnitPrice()),
@@ -223,22 +226,31 @@ public class IngredientsPanel extends JPanel {
             categoryBox.setSelectedItem(editing.getCategory());
         }
 
-        JComboBox<UnitType> unitBox = new JComboBox<>(new UnitType[]{UnitType.G, UnitType.L, UnitType.U});
+        JComboBox<UnitType> unitBox = new JComboBox<>(new UnitType[]{UnitType.Gr, UnitType.Lt, UnitType.Und});
         if (editing != null) {
             unitBox.setSelectedItem(editing.getUnit());
         }
 
         JTextField priceField = new JTextField(
-                editing == null ? "" : String.valueOf(editing.getUnitPrice()), 12);
+                editing == null ? "" : formatPlainNumber(editing.getPurchasePrice()), 12);
         priceField.setBorder(CulinaryTheme.fieldBorder());
         JLabel priceFeedback = new JLabel(" ");
         priceFeedback.setFont(CulinaryTheme.FONT_SMALL);
+
+        JTextField purchaseQtyField = new JTextField(
+                editing == null ? "" : formatPlainNumber(editing.getPurchaseQuantity()), 12);
+        purchaseQtyField.setBorder(CulinaryTheme.fieldBorder());
+        JLabel purchaseQtyFeedback = new JLabel(" ");
+        purchaseQtyFeedback.setFont(CulinaryTheme.FONT_SMALL);
 
         // Slider 0.0% a 50.0% con paso 0.5% (representado 0..100 en enteros)
         int initialSteps = editing == null ? 0 : (int) Math.round(Math.min(50.0, editing.getWastePercentage()) * 2);
         JSlider wasteSlider = CulinaryTheme.createStyledSlider(0, 100, initialSteps);
         JLabel wasteValueLabel = new JLabel();
         wasteValueLabel.setFont(CulinaryTheme.FONT_MONO_BOLD);
+        JLabel unitPricePreview = new JLabel();
+        unitPricePreview.setFont(CulinaryTheme.FONT_MONO_BOLD);
+        unitPricePreview.setForeground(CulinaryTheme.TEXT_PRIMARY);
         JLabel effectivePreview = new JLabel();
         effectivePreview.setFont(CulinaryTheme.FONT_MONO_BOLD);
         effectivePreview.setForeground(CulinaryTheme.ACCENT_APRICOT);
@@ -271,24 +283,48 @@ public class IngredientsPanel extends JPanel {
             double wastePct = wasteSlider.getValue() / 2.0;
             wasteValueLabel.setText(String.format(Locale.US, "%.1f%%", wastePct));
 
+            UnitType selectedUnit = (UnitType) unitBox.getSelectedItem();
+            String unitSym = selectedUnit != null ? selectedUnit.getSymbol() : "g";
+
             String priceTxt = priceField.getText().trim();
             boolean validPrice = InputRegexValidator.isValidPositiveDecimal(priceTxt);
             if (priceTxt.isEmpty()) {
-                priceFeedback.setText("Campo obligatorio (ej. 0.0032).");
+                priceFeedback.setText("Campo obligatorio (ej. 3.20 por paquete/lote).");
                 priceFeedback.setForeground(CulinaryTheme.TEXT_SECONDARY);
-                effectivePreview.setText("Costo Real Útil: ingresa precio válido (ej. 0.0032)");
             } else if (!validPrice) {
-                priceFeedback.setText("⚠ Precio inválido. Usa decimal positivo hasta 4 decimales (ej. 0.0032).");
+                priceFeedback.setText("⚠ Precio inválido. Usa decimal positivo hasta 4 decimales (ej. 3.20).");
                 priceFeedback.setForeground(CulinaryTheme.ALERT_RED);
-                effectivePreview.setText("Costo Real Útil: precio inválido");
             } else {
-                priceFeedback.setText("✓ Precio válido");
+                priceFeedback.setText("✓ Precio de compra válido");
                 priceFeedback.setForeground(CulinaryTheme.OK_GREEN);
+            }
+
+            String purchaseQtyTxt = purchaseQtyField.getText().trim();
+            boolean validPurchaseQty = InputRegexValidator.isValidPositiveDecimal(purchaseQtyTxt)
+                    && Double.parseDouble(purchaseQtyTxt) > 0;
+            if (purchaseQtyTxt.isEmpty()) {
+                purchaseQtyFeedback.setText("Campo obligatorio (ej. 1000 para 1 kg, 500, 1).");
+                purchaseQtyFeedback.setForeground(CulinaryTheme.TEXT_SECONDARY);
+            } else if (!validPurchaseQty) {
+                purchaseQtyFeedback.setText("⚠ Cantidad inválida. Usa número positivo > 0 (ej. 1000).");
+                purchaseQtyFeedback.setForeground(CulinaryTheme.ALERT_RED);
+            } else {
+                purchaseQtyFeedback.setText("✓ Cantidad válida (" + purchaseQtyTxt + " " + unitSym + ")");
+                purchaseQtyFeedback.setForeground(CulinaryTheme.OK_GREEN);
+            }
+
+            if (validPrice && validPurchaseQty) {
                 double p = Double.parseDouble(priceTxt);
-                double eff = p / (1.0 - wastePct / 100.0);
-                UnitType u = (UnitType) unitBox.getSelectedItem();
-                effectivePreview.setText("Costo Real Útil: " + CurrencyFormatter.formatUSD(eff)
-                        + "/" + (u != null ? u.getSymbol() : "g"));
+                double q = Double.parseDouble(purchaseQtyTxt);
+                double unitPrice = p / q;
+                double eff = unitPrice / (1.0 - wastePct / 100.0);
+                unitPricePreview.setText("Precio Unitario Base: " + CurrencyFormatter.formatUSD(unitPrice)
+                        + "/" + unitSym + " (compra / cantidad)");
+                effectivePreview.setText("Costo Real Útil (con merma): " + CurrencyFormatter.formatUSD(eff)
+                        + "/" + unitSym);
+            } else {
+                unitPricePreview.setText("Precio Unitario Base: ingresa precio y cantidad > 0");
+                effectivePreview.setText("Costo Real Útil (con merma): pendiente de datos válidos");
             }
 
             boolean perishable = perishableCheck.isSelected();
@@ -327,11 +363,12 @@ public class IngredientsPanel extends JPanel {
                 nameFeedback.setForeground(CulinaryTheme.OK_GREEN);
                 nameOk = true;
             }
-            saveBtn.setEnabled(nameOk && validPrice && validDate);
+            saveBtn.setEnabled(nameOk && validPrice && validPurchaseQty && validDate);
         };
 
         nameField.getDocument().addDocumentListener(new SimpleDocListener(updateLiveState));
         priceField.getDocument().addDocumentListener(new SimpleDocListener(updateLiveState));
+        purchaseQtyField.getDocument().addDocumentListener(new SimpleDocListener(updateLiveState));
         expDateField.getDocument().addDocumentListener(new SimpleDocListener(updateLiveState));
         wasteSlider.addChangeListener(e -> updateLiveState.run());
         unitBox.addActionListener(e -> updateLiveState.run());
@@ -347,16 +384,24 @@ public class IngredientsPanel extends JPanel {
         form.add(nameFeedback, gbc);
         addRow(form, gbc, row++, "Categoría *:", categoryBox);
         addRow(form, gbc, row++, "Unidad Base:", unitBox);
-        addRow(form, gbc, row++, "Precio Compra (USD) *:", priceField);
+        addRow(form, gbc, row++, "Precio de Compra (USD) *:", priceField);
         gbc.gridx = 1;
         gbc.gridy = row++;
         form.add(priceFeedback, gbc);
+        addRow(form, gbc, row++, "Cantidad por Compra *:", purchaseQtyField);
+        gbc.gridx = 1;
+        gbc.gridy = row++;
+        form.add(purchaseQtyFeedback, gbc);
 
         JPanel sliderBox = new JPanel(new BorderLayout(8, 0));
         sliderBox.setOpaque(false);
         sliderBox.add(wasteSlider, BorderLayout.CENTER);
         sliderBox.add(wasteValueLabel, BorderLayout.EAST);
         addRow(form, gbc, row++, "Porcentaje de Merma:", sliderBox);
+
+        gbc.gridx = 1;
+        gbc.gridy = row++;
+        form.add(unitPricePreview, gbc);
 
         gbc.gridx = 1;
         gbc.gridy = row++;
@@ -388,7 +433,8 @@ public class IngredientsPanel extends JPanel {
                 String name = nameField.getText();
                 String cat = (String) categoryBox.getSelectedItem();
                 UnitType unit = (UnitType) unitBox.getSelectedItem();
-                double price = Double.parseDouble(priceField.getText().trim());
+                double purchasePrice = Double.parseDouble(priceField.getText().trim());
+                double purchaseQty = Double.parseDouble(purchaseQtyField.getText().trim());
                 double waste = wasteSlider.getValue() / 2.0;
                 boolean perishable = perishableCheck.isSelected();
                 String dateTxt = expDateField.getText().trim();
@@ -396,9 +442,10 @@ public class IngredientsPanel extends JPanel {
 
                 Ingredient saved;
                 if (editing == null) {
-                    saved = catalogService.createIngredient(name, cat, unit, price, waste, perishable);
+                    saved = catalogService.createIngredient(name, cat, unit, purchasePrice, purchaseQty, waste, perishable);
                 } else {
-                    saved = catalogService.updateIngredient(editing.getId(), name, cat, unit, price, waste, perishable);
+                    saved = catalogService.updateIngredient(
+                            editing.getId(), name, cat, unit, purchasePrice, purchaseQty, waste, perishable);
                 }
                 if (expDate != null) {
                     inventoryService.applyMovement(saved.getId(), StockMovementType.ADD, 0.0, null, expDate);
@@ -419,6 +466,13 @@ public class IngredientsPanel extends JPanel {
         dialog.pack();
         dialog.setLocationRelativeTo(owner);
         dialog.setVisible(true);
+    }
+
+    private static String formatPlainNumber(double value) {
+        if (value == 0.0) {
+            return "0";
+        }
+        return java.math.BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
     }
 
     private static boolean isValidCalendarIsoDate(String text) {

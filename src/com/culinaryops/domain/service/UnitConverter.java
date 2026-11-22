@@ -17,7 +17,7 @@ public class UnitConverter {
             throw new IllegalArgumentException("Las unidades son obligatorias");
         }
         
-        if(from==to || from==UnitType.U || to==UnitType.U){
+        if(from==to || from==UnitType.Und || to==UnitType.Und){
             return amount;
         }
         
@@ -26,10 +26,10 @@ public class UnitConverter {
     
     private static double toBaseFactor (UnitType unit){
         return switch(unit){
-            case UnitType.G -> 1.0;
+            case UnitType.Gr -> 1.0;
             case UnitType.ML -> 1.0;
             case UnitType.KG -> 1000.0;
-            case UnitType.L -> 1000.0;
+            case UnitType.Lt -> 1000.0;
             default -> throw new IllegalArgumentException("Unidad desconocida: "+unit);
         };
     }

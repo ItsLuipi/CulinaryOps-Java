@@ -91,11 +91,11 @@ public class InMemoryRecipeRepository implements IRecipeRepository {
                 "1. Batir huevos y azúcar a punto cinta. 2. Incorporar harina tamizada en forma envolvente. "
                         + "3. Añadir mantequilla derretida tibia y vainilla. 4. Hornear a 175°C durante 30 minutos.",
                 List.of(
-                        requireItem(ingredientRepo, "ing-1", UnitType.G, 250.0),
-                        requireItem(ingredientRepo, "ing-2", UnitType.G, 150.0),
-                        requireItem(ingredientRepo, "ing-3", UnitType.G, 150.0),
-                        requireItem(ingredientRepo, "ing-4", UnitType.G, 30.0),
-                        requireItem(ingredientRepo, "ing-8", UnitType.G, 5.0)
+                        requireItem(ingredientRepo, "ing-1", UnitType.Gr, 250.0),
+                        requireItem(ingredientRepo, "ing-2", UnitType.Gr, 150.0),
+                        requireItem(ingredientRepo, "ing-3", UnitType.Gr, 150.0),
+                        requireItem(ingredientRepo, "ing-4", UnitType.Gr, 30.0),
+                        requireItem(ingredientRepo, "ing-8", UnitType.Gr, 5.0)
                 ),
                 now,
                 now
@@ -111,10 +111,10 @@ public class InMemoryRecipeRepository implements IRecipeRepository {
                 "1. Calentar la crema de leche hasta hervor suave. 2. Volcar sobre el chocolate picado y emulsionar. "
                         + "3. Incorporar la mantequilla en cubos. 4. Decorar con fresas frescas al enfriar.",
                 List.of(
-                        requireItem(ingredientRepo, "ing-5", UnitType.G, 350.0),
-                        requireItem(ingredientRepo, "ing-7", UnitType.L, 0.3),
-                        requireItem(ingredientRepo, "ing-4", UnitType.G, 50.0),
-                        requireItem(ingredientRepo, "ing-6", UnitType.G, 250.0)
+                        requireItem(ingredientRepo, "ing-5", UnitType.Gr, 350.0),
+                        requireItem(ingredientRepo, "ing-7", UnitType.Lt, 0.3),
+                        requireItem(ingredientRepo, "ing-4", UnitType.Gr, 50.0),
+                        requireItem(ingredientRepo, "ing-6", UnitType.Gr, 250.0)
                 ),
                 now,
                 now
