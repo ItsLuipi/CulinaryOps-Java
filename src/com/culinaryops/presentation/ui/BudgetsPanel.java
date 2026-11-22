@@ -12,6 +12,7 @@ import com.culinaryops.domain.model.enums.BudgetStatus;
 import com.culinaryops.domain.service.CurrencyFormatter;
 import com.culinaryops.domain.service.InputRegexValidator;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Frame;
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -43,6 +45,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTable;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
@@ -309,48 +312,74 @@ public class BudgetsPanel extends JPanel {
         JDialog dialog = new JDialog(owner, "Nuevo Presupuesto Comercial", true);
         CulinaryTheme.installEscapeClose(dialog);
         dialog.getContentPane().setBackground(CulinaryTheme.BG_CARD);
-        dialog.setLayout(new BorderLayout(0, 10));
+        dialog.setLayout(new BorderLayout(0, 8));
 
         JPanel form = new JPanel(new GridBagLayout());
         form.setBackground(CulinaryTheme.BG_CARD);
-        form.setBorder(BorderFactory.createEmptyBorder(12, 18, 6, 18));
+        form.setBorder(BorderFactory.createEmptyBorder(12, 18, 4, 18));
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(4, 6, 4, 6);
+        gbc.insets = new Insets(2, 6, 2, 6);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
 
-        JTextField clientField = new JTextField(22);
-        JTextField eventField = new JTextField("Servicio de Pastelería", 22);
-        JTextField dateField = new JTextField(LocalDate.now().plusDays(14).toString(), 12);
-        JTextField notesField = new JTextField(22);
+        JTextField clientField = createBorderedField("", 22);
+        JLabel clientFeedback = createFeedbackLabel();
 
-        JTextField hoursField = new JTextField("4.0", 6);
-        JTextField rateField = new JTextField("14.0", 6);
-        JTextField utilField = new JTextField("8.0", 6);
-        JTextField equipField = new JTextField("5.0", 6);
-        JTextField packField = new JTextField("12.0", 6);
+        JTextField eventField = createBorderedField("Servicio de Pastelería", 16);
+        JLabel eventFeedback = createFeedbackLabel();
+
+        JTextField dateField = createBorderedField(LocalDate.now().plusDays(14).toString(), 13);
+        JLabel dateFeedback = createFeedbackLabel();
+
+        JTextField notesField = createBorderedField("", 22);
+
+        JTextField hoursField = createBorderedField("4.0", 12);
+        JLabel hoursFeedback = createFeedbackLabel();
+
+        JTextField rateField = createBorderedField("14.0", 12);
+        JLabel rateFeedback = createFeedbackLabel();
+
+        JTextField utilField = createBorderedField("8.0", 12);
+        JLabel utilFeedback = createFeedbackLabel();
+
+        JTextField equipField = createBorderedField("5.0", 12);
+        JLabel equipFeedback = createFeedbackLabel();
+
+        JTextField packField = createBorderedField("12.0", 12);
+        JLabel packFeedback = createFeedbackLabel();
+
+        JTextField taxField = createBorderedField("0.0", 12);
+        JLabel taxFeedback = createFeedbackLabel();
 
         JSlider marginSlider = CulinaryTheme.createStyledSlider(0, 100, 30);
         JLabel marginValLabel = new JLabel("30%");
-        JTextField taxField = new JTextField("0.0", 6);
+        marginValLabel.setFont(CulinaryTheme.FONT_MONO_BOLD);
+        JLabel marginFeedback = createFeedbackLabel();
 
         int r = 0;
-        addRow(form, gbc, r++, "Cliente *:", clientField);
-        addRow(form, gbc, r++, "Evento / Servicio:", eventField);
-        addRow(form, gbc, r++, "Fecha Entrega (YYYY-MM-DD):", dateField);
-        addRow(form, gbc, r++, "Notas:", notesField);
-        addRow(form, gbc, r++, "Horas de Trabajo:", hoursField);
-        addRow(form, gbc, r++, "Tarifa (USD/hora):", rateField);
-        addRow(form, gbc, r++, "Luz, Gas, Agua (USD):", utilField);
-        addRow(form, gbc, r++, "Desgaste Equipos (USD):", equipField);
-        addRow(form, gbc, r++, "Cajas / Envío (USD):", packField);
+        addSpanRow(form, gbc, r++, "Cliente *:", clientField);
+        addSpanFeedbackRow(form, gbc, r++, clientFeedback);
+
+        addPairRow(form, gbc, r++, "Evento / Servicio:", eventField, "Fecha (YYYY-MM-DD):", dateField);
+        addPairFeedbackRow(form, gbc, r++, eventFeedback, dateFeedback);
+
+        addSpanRow(form, gbc, r++, "Notas:", notesField);
+
+        addPairRow(form, gbc, r++, "Horas de Trabajo:", hoursField, "Tarifa (USD/hora):", rateField);
+        addPairFeedbackRow(form, gbc, r++, hoursFeedback, rateFeedback);
+
+        addPairRow(form, gbc, r++, "Luz, Gas, Agua (USD):", utilField, "Desgaste Equipos (USD):", equipField);
+        addPairFeedbackRow(form, gbc, r++, utilFeedback, equipFeedback);
+
+        addPairRow(form, gbc, r++, "Cajas / Envío (USD):", packField, "Impuestos (%):", taxField);
+        addPairFeedbackRow(form, gbc, r++, packFeedback, taxFeedback);
 
         JPanel sliderBox = new JPanel(new BorderLayout(8, 0));
         sliderBox.setOpaque(false);
         sliderBox.add(marginSlider, BorderLayout.CENTER);
         sliderBox.add(marginValLabel, BorderLayout.EAST);
-        addRow(form, gbc, r++, "Margen de Utilidad (%):", sliderBox);
-        addRow(form, gbc, r, "Impuestos (%):", taxField);
+        addSpanRow(form, gbc, r++, "Margen de Utilidad (%):", sliderBox);
+        addSpanFeedbackRow(form, gbc, r, marginFeedback);
 
         // Recetas del servicio (inician vacías "-- Seleccionar receta --")
         JPanel rowsContainer = new JPanel();
@@ -362,21 +391,84 @@ public class BudgetsPanel extends JPanel {
         JLabel livePanel = new JLabel("Costo Base: $0.00 USD | Ganancia: $0.00 USD | Precio Final: $0.00 USD");
         livePanel.setFont(CulinaryTheme.FONT_MONO_BOLD);
         livePanel.setForeground(CulinaryTheme.ACCENT_APRICOT);
+        JLabel validationLabel = new JLabel(" ");
+        validationLabel.setFont(CulinaryTheme.FONT_SMALL);
         JButton saveBtn = CulinaryTheme.createPrimaryButton("Guardar Presupuesto");
+        dialog.getRootPane().setDefaultButton(saveBtn);
 
         Runnable[] recalcRef = new Runnable[1];
         recalcRef[0] = () -> {
-            marginValLabel.setText(marginSlider.getValue() + "%");
+            // 1. Validar Cliente *
+            String rawClient = clientField.getText();
+            boolean clientEmpty = rawClient.trim().isEmpty();
+            boolean clientOk = InputRegexValidator.isValidName(rawClient);
+            if (clientEmpty) {
+                setFieldState(clientField, clientFeedback, "Campo obligatorio (mín. 2 caracteres).", CulinaryTheme.TEXT_SECONDARY, false);
+            } else if (!clientOk) {
+                setFieldState(clientField, clientFeedback, "⚠ Nombre inválido (mín. 2 caracteres válidos).", CulinaryTheme.ALERT_RED, true);
+            } else {
+                setFieldState(clientField, clientFeedback, "✓ Cliente válido", CulinaryTheme.OK_GREEN, false);
+            }
+
+            // 2. Validar Evento
+            String rawEvent = eventField.getText();
+            boolean eventEmpty = rawEvent.trim().isEmpty();
+            boolean eventOk = eventEmpty || InputRegexValidator.isValidName(rawEvent);
+            if (eventEmpty) {
+                setFieldState(eventField, eventFeedback, "Opcional ('Servicio de Pastelería').", CulinaryTheme.TEXT_SECONDARY, false);
+            } else if (!eventOk) {
+                setFieldState(eventField, eventFeedback, "⚠ Nombre de evento inválido.", CulinaryTheme.ALERT_RED, true);
+            } else {
+                setFieldState(eventField, eventFeedback, "✓ Evento válido", CulinaryTheme.OK_GREEN, false);
+            }
+
+            // 3. Validar Fecha Entrega
+            String dTxt = dateField.getText().trim();
+            boolean dateOk = dTxt.isEmpty() || isValidCalendarIsoDate(dTxt);
+            if (dTxt.isEmpty()) {
+                setFieldState(dateField, dateFeedback, "Opcional (formato YYYY-MM-DD).", CulinaryTheme.TEXT_SECONDARY, false);
+            } else if (!dateOk) {
+                setFieldState(dateField, dateFeedback, "⚠ Fecha inválida (ej. 2026-12-06).", CulinaryTheme.ALERT_RED, true);
+            } else {
+                setFieldState(dateField, dateFeedback, "✓ Fecha válida", CulinaryTheme.OK_GREEN, false);
+            }
+
+            // 4. Validar costos operativos e impuestos
+            boolean hoursOk = validateNonNegativeDecimalField(hoursField, hoursFeedback, "h");
+            boolean rateOk = validateNonNegativeDecimalField(rateField, rateFeedback, "USD/h");
+            boolean utilOk = validateNonNegativeDecimalField(utilField, utilFeedback, "USD");
+            boolean equipOk = validateNonNegativeDecimalField(equipField, equipFeedback, "USD");
+            boolean packOk = validateNonNegativeDecimalField(packField, packFeedback, "USD");
+            boolean taxOk = validateTaxField(taxField, taxFeedback);
+
+            int marginPct = marginSlider.getValue();
+            marginValLabel.setText(marginPct + "%");
+            marginFeedback.setText("✓ Margen aplicado sobre costo base (" + marginPct + "%)");
+            marginFeedback.setForeground(CulinaryTheme.OK_GREEN);
+
+            // 5. Validar filas de recetas
             double rawMat = 0.0;
-            boolean itemsOk = !recipeRows.isEmpty();
+            boolean hasMissingRow = recipeRows.isEmpty();
+            boolean hasInvalidRowQty = false;
             for (RecipeRow rowItem : recipeRows) {
                 RecipeChoice ch = (RecipeChoice) rowItem.combo.getSelectedItem();
                 Recipe rec = ch == null ? null : ch.recipe;
                 String qTxt = rowItem.qtyField.getText().trim();
-                if (rec == null || !InputRegexValidator.isValidPositiveDecimal(qTxt) || Double.parseDouble(qTxt) <= 0) {
-                    itemsOk = false;
+
+                if (rec == null) {
+                    hasMissingRow = true;
+                    rowItem.setRowStatus("Selecciona una receta del catálogo.", CulinaryTheme.TEXT_SECONDARY, false);
+                } else if (qTxt.isEmpty()) {
+                    hasMissingRow = true;
+                    rowItem.setRowStatus("Ingresa cantidad de tandas > 0 (ej. 1).", CulinaryTheme.TEXT_SECONDARY, false);
+                } else if (!InputRegexValidator.isValidPositiveDecimal(qTxt) || Double.parseDouble(qTxt) <= 0) {
+                    hasInvalidRowQty = true;
+                    rowItem.setRowStatus("⚠ Cantidad inválida. Usa decimal > 0 (ej. 1 o 1.5).", CulinaryTheme.ALERT_RED, true);
                 } else {
-                    rawMat += new BudgetItem(rec, Double.parseDouble(qTxt)).getSubtotalCost();
+                    double q = Double.parseDouble(qTxt);
+                    double sub = new BudgetItem(rec, q).getSubtotalCost();
+                    rawMat += sub;
+                    rowItem.setRowStatus("✓ Subtotal materia prima: " + CurrencyFormatter.formatUSD(sub), CulinaryTheme.OK_GREEN, false);
                 }
             }
 
@@ -384,7 +476,7 @@ public class BudgetsPanel extends JPanel {
                     parseOrZero(hoursField), parseOrZero(rateField), parseOrZero(utilField),
                     parseOrZero(equipField), parseOrZero(packField));
             double base = rawMat + ops.getTotalOperationalCost();
-            double profit = base * (marginSlider.getValue() / 100.0);
+            double profit = base * (marginPct / 100.0);
             double suggested = base + profit;
             double taxPct = parseOrZero(taxField);
             double finalPrice = suggested + (suggested * (taxPct / 100.0));
@@ -395,10 +487,24 @@ public class BudgetsPanel extends JPanel {
                     CurrencyFormatter.formatUSD(profit),
                     CurrencyFormatter.formatUSD(finalPrice)));
 
-            boolean clientOk = InputRegexValidator.isValidName(clientField.getText());
-            String dTxt = dateField.getText().trim();
-            boolean dateOk = dTxt.isEmpty() || InputRegexValidator.isValidIsoDate(dTxt);
-            saveBtn.setEnabled(clientOk && dateOk && itemsOk);
+            boolean opsAndTaxOk = hoursOk && rateOk && utilOk && equipOk && packOk && taxOk;
+            boolean hasRedErrors = (!clientEmpty && !clientOk) || !eventOk || !dateOk || !opsAndTaxOk || hasInvalidRowQty;
+            boolean allValid = clientOk && eventOk && dateOk && opsAndTaxOk && !hasMissingRow && !hasInvalidRowQty;
+
+            if (hasInvalidRowQty) {
+                validationLabel.setText("⚠ Hay cantidades inválidas en las recetas del servicio.");
+                validationLabel.setForeground(CulinaryTheme.ALERT_RED);
+            } else if (hasRedErrors) {
+                validationLabel.setText("⚠ Corrige los campos marcados en rojo antes de guardar.");
+                validationLabel.setForeground(CulinaryTheme.ALERT_RED);
+            } else if (!allValid) {
+                validationLabel.setText("Completa el cliente (*) y al menos 1 receta con cantidad > 0.");
+                validationLabel.setForeground(CulinaryTheme.TEXT_SECONDARY);
+            } else {
+                validationLabel.setText("✓ Presupuesto listo para guardar");
+                validationLabel.setForeground(CulinaryTheme.OK_GREEN);
+            }
+            saveBtn.setEnabled(allValid);
         };
 
         Runnable addEmptyRow = () -> {
@@ -421,6 +527,7 @@ public class BudgetsPanel extends JPanel {
 
         DocListener dl = new DocListener(recalcRef[0]);
         clientField.getDocument().addDocumentListener(dl);
+        eventField.getDocument().addDocumentListener(dl);
         dateField.getDocument().addDocumentListener(dl);
         hoursField.getDocument().addDocumentListener(dl);
         rateField.getDocument().addDocumentListener(dl);
@@ -443,12 +550,15 @@ public class BudgetsPanel extends JPanel {
         recHeader.add(addRecBtn, BorderLayout.EAST);
 
         JScrollPane recScroll = new JScrollPane(rowsContainer);
-        recScroll.setPreferredSize(new Dimension(560, 120));
+        recScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        recScroll.setBorder(BorderFactory.createLineBorder(CulinaryTheme.BORDER_FLOUR, 1));
+        recScroll.setPreferredSize(new Dimension(640, 135));
 
-        JPanel summaryWrap = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel summaryWrap = new JPanel(new GridLayout(2, 1, 0, 2));
         summaryWrap.setOpaque(false);
-        summaryWrap.add(Box.createHorizontalStrut(2));
+        summaryWrap.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 0));
         summaryWrap.add(livePanel);
+        summaryWrap.add(validationLabel);
 
         recipesSection.add(recHeader, BorderLayout.NORTH);
         recipesSection.add(recScroll, BorderLayout.CENTER);
@@ -499,21 +609,142 @@ public class BudgetsPanel extends JPanel {
         dialog.setVisible(true);
     }
 
+    private static JTextField createBorderedField(String initial, int cols) {
+        JTextField field = new JTextField(initial, cols);
+        field.setBorder(CulinaryTheme.fieldBorder());
+        return field;
+    }
+
+    private static JLabel createFeedbackLabel() {
+        JLabel lbl = new JLabel(" ");
+        lbl.setFont(CulinaryTheme.FONT_SMALL);
+        return lbl;
+    }
+
+    private static void setFieldState(JTextField field, JLabel feedback, String msg, Color color, boolean redBorder) {
+        feedback.setText(msg);
+        feedback.setForeground(color);
+        if (redBorder) {
+            field.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(CulinaryTheme.ALERT_RED, 1),
+                    BorderFactory.createEmptyBorder(6, 8, 6, 8)));
+        } else {
+            field.setBorder(CulinaryTheme.fieldBorder());
+        }
+    }
+
+    private static boolean validateNonNegativeDecimalField(JTextField field, JLabel feedback, String unitLabel) {
+        String txt = field.getText().trim();
+        if (txt.isEmpty()) {
+            setFieldState(field, feedback, "Opcional (se usará 0.0 " + unitLabel + ").", CulinaryTheme.TEXT_SECONDARY, false);
+            return true;
+        }
+        if (!InputRegexValidator.isValidPositiveDecimal(txt)) {
+            setFieldState(field, feedback, "⚠ Usa decimal >= 0 (ej. 12.50).", CulinaryTheme.ALERT_RED, true);
+            return false;
+        }
+        setFieldState(field, feedback, "✓ Válido (" + txt + " " + unitLabel + ")", CulinaryTheme.OK_GREEN, false);
+        return true;
+    }
+
+    private static boolean validateTaxField(JTextField field, JLabel feedback) {
+        String txt = field.getText().trim();
+        if (txt.isEmpty()) {
+            setFieldState(field, feedback, "Opcional (0.0%).", CulinaryTheme.TEXT_SECONDARY, false);
+            return true;
+        }
+        if (!InputRegexValidator.isValidPercentage(txt)) {
+            setFieldState(field, feedback, "⚠ Rango válido: 0 a 100%", CulinaryTheme.ALERT_RED, true);
+            return false;
+        }
+        setFieldState(field, feedback, "✓ Impuesto: " + txt + "%", CulinaryTheme.OK_GREEN, false);
+        return true;
+    }
+
+    private static boolean isValidCalendarIsoDate(String text) {
+        if (!InputRegexValidator.isValidIsoDate(text)) {
+            return false;
+        }
+        try {
+            LocalDate.parse(text);
+            return true;
+        } catch (DateTimeParseException ex) {
+            return false;
+        }
+    }
+
     private static double parseOrZero(JTextField field) {
         String txt = field.getText().trim();
         return InputRegexValidator.isValidPositiveDecimal(txt) ? Double.parseDouble(txt) : 0.0;
     }
 
-    private static void addRow(JPanel form, GridBagConstraints gbc, int row, String label, java.awt.Component comp) {
-        gbc.gridx = 0;
+    private static void addSpanRow(
+            JPanel form, GridBagConstraints gbc, int row, String label, java.awt.Component comp) {
         gbc.gridy = row;
+        gbc.gridx = 0;
+        gbc.gridwidth = 1;
         gbc.weightx = 0.0;
         JLabel lbl = new JLabel(label);
         lbl.setFont(CulinaryTheme.FONT_BODY_BOLD);
+        lbl.setForeground(CulinaryTheme.TEXT_PRIMARY);
         form.add(lbl, gbc);
+
         gbc.gridx = 1;
+        gbc.gridwidth = 3;
         gbc.weightx = 1.0;
         form.add(comp, gbc);
+        gbc.gridwidth = 1;
+    }
+
+    private static void addSpanFeedbackRow(JPanel form, GridBagConstraints gbc, int row, JLabel feedback) {
+        gbc.gridy = row;
+        gbc.gridx = 1;
+        gbc.gridwidth = 3;
+        gbc.weightx = 1.0;
+        form.add(feedback, gbc);
+        gbc.gridwidth = 1;
+    }
+
+    private static void addPairRow(
+            JPanel form, GridBagConstraints gbc, int row,
+            String label1, java.awt.Component comp1,
+            String label2, java.awt.Component comp2) {
+        gbc.gridy = row;
+        gbc.gridwidth = 1;
+
+        gbc.gridx = 0;
+        gbc.weightx = 0.0;
+        JLabel lbl1 = new JLabel(label1);
+        lbl1.setFont(CulinaryTheme.FONT_BODY_BOLD);
+        lbl1.setForeground(CulinaryTheme.TEXT_PRIMARY);
+        form.add(lbl1, gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 0.5;
+        form.add(comp1, gbc);
+
+        gbc.gridx = 2;
+        gbc.weightx = 0.0;
+        JLabel lbl2 = new JLabel(label2);
+        lbl2.setFont(CulinaryTheme.FONT_BODY_BOLD);
+        lbl2.setForeground(CulinaryTheme.TEXT_PRIMARY);
+        form.add(lbl2, gbc);
+
+        gbc.gridx = 3;
+        gbc.weightx = 0.5;
+        form.add(comp2, gbc);
+    }
+
+    private static void addPairFeedbackRow(
+            JPanel form, GridBagConstraints gbc, int row, JLabel fb1, JLabel fb2) {
+        gbc.gridy = row;
+        gbc.gridwidth = 1;
+        gbc.gridx = 1;
+        gbc.weightx = 0.5;
+        form.add(fb1, gbc);
+        gbc.gridx = 3;
+        gbc.weightx = 0.5;
+        form.add(fb2, gbc);
     }
 
     private record RecipeChoice(Recipe recipe) {
@@ -527,26 +758,54 @@ public class BudgetsPanel extends JPanel {
     }
 
     private static class RecipeRow {
-        final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 2));
+        final JPanel panel = new JPanel(new BorderLayout(0, 2));
         final JComboBox<RecipeChoice> combo = new JComboBox<>();
         final JTextField qtyField = new JTextField("1", 5);
+        final JLabel statusLabel = new JLabel(" ");
 
         RecipeRow(List<Recipe> recipes, Runnable onChange, java.util.function.Consumer<RecipeRow> onRemove) {
             panel.setBackground(CulinaryTheme.BG_CARD);
+            panel.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, CulinaryTheme.BORDER_FLOUR),
+                    BorderFactory.createEmptyBorder(4, 6, 4, 6)));
+
+            combo.setPreferredSize(new Dimension(350, 30));
             combo.addItem(new RecipeChoice(null));
             for (Recipe r : recipes) {
                 combo.addItem(new RecipeChoice(r));
             }
             qtyField.setBorder(CulinaryTheme.fieldBorder());
+            qtyField.setPreferredSize(new Dimension(70, 30));
             combo.addActionListener(e -> onChange.run());
             qtyField.getDocument().addDocumentListener(new DocListener(onChange));
             JButton removeBtn = CulinaryTheme.createSecondaryButton("Quitar");
             removeBtn.addActionListener(e -> onRemove.accept(this));
 
-            panel.add(combo);
-            panel.add(new JLabel("Cant:"));
-            panel.add(qtyField);
-            panel.add(removeBtn);
+            JPanel topControls = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+            topControls.setOpaque(false);
+            topControls.add(combo);
+            topControls.add(new JLabel("Cant:"));
+            topControls.add(qtyField);
+            topControls.add(removeBtn);
+
+            statusLabel.setFont(CulinaryTheme.FONT_SMALL);
+            statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
+
+            panel.add(topControls, BorderLayout.NORTH);
+            panel.add(statusLabel, BorderLayout.SOUTH);
+            panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, panel.getPreferredSize().height + 6));
+        }
+
+        void setRowStatus(String text, Color color, boolean invalidQtyBorder) {
+            statusLabel.setText(text);
+            statusLabel.setForeground(color);
+            if (invalidQtyBorder) {
+                qtyField.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(CulinaryTheme.ALERT_RED, 1),
+                        BorderFactory.createEmptyBorder(6, 8, 6, 8)));
+            } else {
+                qtyField.setBorder(CulinaryTheme.fieldBorder());
+            }
         }
     }
 
