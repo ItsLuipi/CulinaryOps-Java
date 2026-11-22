@@ -17,24 +17,10 @@ public abstract class BaseEntity {
     protected final LocalDateTime createdAt;
     protected LocalDateTime updatedAt;
 
-    /**
-     * Crea una nueva entidad con marcas de tiempo actuales.
-     *
-     * @param id identificador único de la entidad (no nulo ni vacío)
-     * @throws IllegalArgumentException si {@code id} es nulo o está en blanco
-     */
     protected BaseEntity(String id) {
         this(id, LocalDateTime.now(), LocalDateTime.now());
     }
 
-    /**
-     * Reconstruye una entidad existente preservando sus marcas de tiempo.
-     *
-     * @param id identificador único de la entidad (no nulo ni vacío)
-     * @param createdAt fecha y hora de creación (si es null, usa la actual)
-     * @param updatedAt fecha y hora de última actualización (si es null, usa {@code createdAt})
-     * @throws IllegalArgumentException si {@code id} es nulo o está en blanco
-     */
     protected BaseEntity(String id, LocalDateTime createdAt, LocalDateTime updatedAt) {
         if (id == null || id.isBlank()) {
             throw new IllegalArgumentException("El id de la entidad no puede ser nulo ni estar vacío.");

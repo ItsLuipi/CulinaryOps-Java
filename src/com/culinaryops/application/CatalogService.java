@@ -14,7 +14,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-public class CatalogService {
+public class CatalogService implements IQueryService<Ingredient> {
 
     private static final Pattern NUMERIC_SUFFIX_PATTERN = Pattern.compile("\\d+");
 
@@ -28,10 +28,12 @@ public class CatalogService {
         this.ingredientRepository = ingredientRepository;
     }
 
+    @Override
     public List<Ingredient> findAll() {
         return ingredientRepository.findAll();
     }
 
+    @Override
     public Ingredient findById(String id) {
         String cleanId = requireNonBlankId(id);
         return ingredientRepository.findById(cleanId)
@@ -82,6 +84,7 @@ public class CatalogService {
         return List.copyOf(categories);
     }
 
+    @Override
     public List<Ingredient> search(String textQuery) {
         return search(textQuery, null);
     }
