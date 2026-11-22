@@ -65,7 +65,7 @@ public class AssistantPanel extends JPanel {
         setBackground(CulinaryTheme.BG_MAIN);
         setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
 
-        JLabel title = new JLabel("Asistente Pastelero & Calculadora de Moldes");
+        JLabel title = new JLabel("Asistente Pastelero");
         title.setFont(CulinaryTheme.FONT_TITLE);
         title.setForeground(CulinaryTheme.TEXT_PRIMARY);
         add(title, BorderLayout.NORTH);

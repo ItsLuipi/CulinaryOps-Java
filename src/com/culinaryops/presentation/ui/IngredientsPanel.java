@@ -70,7 +70,7 @@ public class IngredientsPanel extends JPanel {
 
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
-        JLabel title = new JLabel("Catálogo de Ingredientes & Mermas");
+        JLabel title = new JLabel("Catálogo de Ingredientes");
         title.setFont(CulinaryTheme.FONT_TITLE);
         title.setForeground(CulinaryTheme.TEXT_PRIMARY);
         JButton newBtn = CulinaryTheme.createPrimaryButton("+ Nuevo Ingrediente");

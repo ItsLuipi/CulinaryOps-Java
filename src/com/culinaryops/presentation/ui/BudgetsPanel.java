@@ -85,7 +85,7 @@ public class BudgetsPanel extends JPanel {
         // Cabecera
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
-        JLabel title = new JLabel("Presupuestos & Cotizador");
+        JLabel title = new JLabel("Presupuestos");
         title.setFont(CulinaryTheme.FONT_TITLE);
         title.setForeground(CulinaryTheme.TEXT_PRIMARY);
         JButton newBtn = CulinaryTheme.createPrimaryButton("+ Nuevo Presupuesto");

@@ -67,7 +67,7 @@ public class DashboardPanel extends JPanel {
         JPanel titleBox = new JPanel();
         titleBox.setLayout(new BoxLayout(titleBox, BoxLayout.Y_AXIS));
         titleBox.setOpaque(false);
-        JLabel title = new JLabel("Obrador & Resumen");
+        JLabel title = new JLabel("Obrador");
         title.setFont(CulinaryTheme.FONT_TITLE);
         title.setForeground(CulinaryTheme.TEXT_PRIMARY);
         JLabel subtitle = new JLabel("Control operativo de mermas, existencias, escandallos y cotizaciones en USD");

@@ -80,7 +80,7 @@ public class RecipesPanel extends JPanel {
         top.setOpaque(false);
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
-        JLabel title = new JLabel("Recetas & Escandallos");
+        JLabel title = new JLabel("Recetas");
         title.setFont(CulinaryTheme.FONT_TITLE);
         title.setForeground(CulinaryTheme.TEXT_PRIMARY);
         JButton newBtn = CulinaryTheme.createPrimaryButton("+ Nueva Receta");
@@ -141,7 +141,7 @@ public class RecipesPanel extends JPanel {
         instructionsArea.setWrapStyleWord(true);
         instructionsArea.setFont(CulinaryTheme.FONT_BODY);
         instructionsArea.setBackground(CulinaryTheme.BG_MAIN);
-        instructionsArea.setBorder(BorderFactory.createTitledBorder("Técnica & Proceso de Preparación"));
+        instructionsArea.setBorder(BorderFactory.createTitledBorder("Preparación"));
 
         JPanel detailCenter = new JPanel(new BorderLayout(0, 8));
         detailCenter.setOpaque(false);

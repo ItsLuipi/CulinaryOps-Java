@@ -79,7 +79,7 @@ public class InventoryPanel extends JPanel {
 
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
-        JLabel title = new JLabel("Control de Inventario & Stock");
+        JLabel title = new JLabel("Control de Inventario");
         title.setFont(CulinaryTheme.FONT_TITLE);
         title.setForeground(CulinaryTheme.TEXT_PRIMARY);
         JButton globalMoveBtn = CulinaryTheme.createPrimaryButton("Registrar Movimiento");
@@ -209,7 +209,7 @@ public class InventoryPanel extends JPanel {
 
     private void openMovementDialog(Ingredient preselected, StockMovementType initialMode) {
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
-        JDialog dialog = new JDialog(owner, "Movimiento & Ajuste de Inventario", true);
+        JDialog dialog = new JDialog(owner, "Movimiento de Inventario", true);
         CulinaryTheme.installEscapeClose(dialog);
         dialog.getContentPane().setBackground(CulinaryTheme.BG_CARD);
         dialog.setLayout(new BorderLayout(0, 12));

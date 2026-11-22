@@ -54,7 +54,7 @@ public class CulinaryOpsFrame extends JFrame {
             BudgetService budgetService,
             InventoryQueryAssistant assistant,
             MoldCalculator moldCalculator) {
-        super("CulinaryOps — Obrador, Escandallos & Costos (USD)");
+        super("CulinaryOps (USD)");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setMinimumSize(new Dimension(1120, 720));
         setSize(1240, 780);
@@ -133,15 +133,15 @@ public class CulinaryOpsFrame extends JFrame {
         sidebar.add(tagline);
         sidebar.add(Box.createVerticalStrut(24));
 
-        addNavButton(sidebar, CARD_DASHBOARD, "1. Obrador & Resumen");
-        addNavButton(sidebar, CARD_INGREDIENTS, "2. Ingredientes & Mermas");
-        addNavButton(sidebar, CARD_INVENTORY, "3. Inventario & Stock");
-        addNavButton(sidebar, CARD_RECIPES, "4. Recetas & Escandallos");
-        addNavButton(sidebar, CARD_BUDGETS, "5. Presupuestos & Cotizador");
+        addNavButton(sidebar, CARD_DASHBOARD, "1. Obrador");
+        addNavButton(sidebar, CARD_INGREDIENTS, "2. Ingredientes");
+        addNavButton(sidebar, CARD_INVENTORY, "3. Inventario");
+        addNavButton(sidebar, CARD_RECIPES, "4. Recetas");
+        addNavButton(sidebar, CARD_BUDGETS, "5. Presupuestos");
 
         sidebar.add(Box.createVerticalGlue());
 
-        JButton assistantBtn = createSidebarButton("6. Asistente & Moldes");
+        JButton assistantBtn = createSidebarButton("6. Asistente");
         assistantBtn.setBackground(CulinaryTheme.ACCENT_APRICOT);
         assistantBtn.setForeground(Color.WHITE);
         assistantBtn.addActionListener(e -> showModule(CARD_ASSISTANT));
