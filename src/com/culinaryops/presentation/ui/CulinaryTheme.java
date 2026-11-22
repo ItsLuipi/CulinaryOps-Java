@@ -252,7 +252,8 @@ public final class CulinaryTheme {
     public static JPanel buildKpiCard(String title, JLabel valueLabel, JLabel subtitleLabel, boolean accent) {
         JPanel card = createCardPanel();
         card.setLayout(new java.awt.BorderLayout(0, 6));
-        card.setPreferredSize(new Dimension(200, 96));
+        card.setPreferredSize(new Dimension(200, 120));
+        card.setMinimumSize(new Dimension(180, 116));
 
         JLabel titleLbl = new JLabel(title);
         titleLbl.setFont(FONT_SMALL.deriveFont(Font.BOLD));

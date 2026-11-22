@@ -103,23 +103,6 @@ public class DashboardPanel extends JPanel {
         content.add(kpiRow);
         content.add(Box.createVerticalStrut(14));
 
-        // Bloque didáctico Huevo vs Azúcar
-        JPanel didacticCard = CulinaryTheme.createCardPanel();
-        didacticCard.setLayout(new BorderLayout(0, 6));
-        JLabel didTitle = new JLabel("Regla de Oro del Obrador: Costo Real Útil = Precio Compra / (1 - Merma)");
-        didTitle.setFont(CulinaryTheme.FONT_SUBTITLE);
-        didTitle.setForeground(CulinaryTheme.ACCENT_APRICOT);
-        JLabel didBody = new JLabel(
-                "<html><b>Ejemplo comparativo:</b> Huevo ($0.0032/g con <b>15.0% merma</b> por cáscara) cuesta en realidad "
-                + "<font face='monospace'>$0.0038 USD/g</font>; mientras que Azúcar ($0.0014/g con <b>1.0% merma</b>) cuesta "
-                + "<font face='monospace'>$0.0014 USD/g</font>. Absorbemos la pérdida antes de costear cada receta.</html>");
-        didBody.setFont(CulinaryTheme.FONT_BODY);
-        didBody.setForeground(CulinaryTheme.TEXT_ACCESSIBLE);
-        didacticCard.add(didTitle, BorderLayout.NORTH);
-        didacticCard.add(didBody, BorderLayout.CENTER);
-        content.add(didacticCard);
-        content.add(Box.createVerticalStrut(14));
-
         // Listados rápidos: Top 3 recetas y Top 3 presupuestos
         JPanel listsRow = new JPanel(new GridLayout(1, 2, 12, 0));
         listsRow.setOpaque(false);
