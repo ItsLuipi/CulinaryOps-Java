@@ -8,6 +8,7 @@ import com.culinaryops.domain.model.enums.StockMovementType;
 import com.culinaryops.domain.service.CurrencyFormatter;
 import com.culinaryops.domain.service.InputRegexValidator;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
@@ -15,6 +16,7 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -82,10 +84,10 @@ public class InventoryPanel extends JPanel {
         JLabel title = new JLabel("Control de Inventario");
         title.setFont(CulinaryTheme.FONT_TITLE);
         title.setForeground(CulinaryTheme.TEXT_PRIMARY);
-        JButton globalMoveBtn = CulinaryTheme.createPrimaryButton("Registrar Movimiento");
-        globalMoveBtn.addActionListener(e -> openMovementDialog(null, StockMovementType.ADD));
+        JButton adjustBtn = CulinaryTheme.createPrimaryButton("Ajustar Stock");
+        adjustBtn.addActionListener(e -> openSelectedOrPicker());
         header.add(title, BorderLayout.WEST);
-        header.add(globalMoveBtn, BorderLayout.EAST);
+        header.add(adjustBtn, BorderLayout.EAST);
 
         JPanel kpiRow = new JPanel(new GridLayout(1, 4, 12, 0));
         kpiRow.setOpaque(false);
@@ -137,20 +139,6 @@ public class InventoryPanel extends JPanel {
         table.getColumnModel().getColumn(4).setCellRenderer(CulinaryTheme.rightMonoRenderer());
         add(CulinaryTheme.wrapTable(table), BorderLayout.CENTER);
 
-        // Botones de movimiento rápido por fila
-        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        footer.setOpaque(false);
-        JButton addBtn = CulinaryTheme.createSecondaryButton("+ Entrada");
-        addBtn.addActionListener(e -> openForSelected(StockMovementType.ADD));
-        JButton subBtn = CulinaryTheme.createSecondaryButton("- Salida");
-        subBtn.addActionListener(e -> openForSelected(StockMovementType.SUBTRACT));
-        JButton setBtn = CulinaryTheme.createSecondaryButton("= Ajustar Conteo");
-        setBtn.addActionListener(e -> openForSelected(StockMovementType.SET));
-        footer.add(addBtn);
-        footer.add(subBtn);
-        footer.add(setBtn);
-        add(footer, BorderLayout.SOUTH);
-
         refreshData();
     }
 
@@ -197,19 +185,15 @@ public class InventoryPanel extends JPanel {
         }
     }
 
-    private void openForSelected(StockMovementType mode) {
+    private void openSelectedOrPicker() {
         int row = table.getSelectedRow();
-        if (row < 0 || row >= displayed.size()) {
-            JOptionPane.showMessageDialog(this, "Selecciona un ingrediente de la tabla.",
-                    "Selección requerida", JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-        openMovementDialog(displayed.get(row), mode);
+        Ingredient preselected = (row >= 0 && row < displayed.size()) ? displayed.get(row) : null;
+        openAdjustDialog(preselected);
     }
 
-    private void openMovementDialog(Ingredient preselected, StockMovementType initialMode) {
+    private void openAdjustDialog(Ingredient preselected) {
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
-        JDialog dialog = new JDialog(owner, "Movimiento de Inventario", true);
+        JDialog dialog = new JDialog(owner, "Ajustar Cantidad de Inventario", true);
         CulinaryTheme.installEscapeClose(dialog);
         dialog.getContentPane().setBackground(CulinaryTheme.BG_CARD);
         dialog.setLayout(new BorderLayout(0, 12));
@@ -218,11 +202,10 @@ public class InventoryPanel extends JPanel {
         form.setBackground(CulinaryTheme.BG_CARD);
         form.setBorder(BorderFactory.createEmptyBorder(16, 20, 8, 20));
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 6, 5, 6);
+        gbc.insets = new Insets(4, 6, 4, 6);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
 
-        // Selector inicia vacío si es botón global
         JComboBox<IngredientChoice> ingCombo = new JComboBox<>();
         ingCombo.addItem(new IngredientChoice(null));
         List<Ingredient> sorted = catalogService.findAll().stream()
@@ -239,113 +222,140 @@ public class InventoryPanel extends JPanel {
         if (toSelect != null) {
             ingCombo.setSelectedItem(toSelect);
         }
+        JLabel ingFeedback = createFeedbackLabel();
 
-        JComboBox<MovementOption> modeCombo = new JComboBox<>(new MovementOption[]{
-                new MovementOption(StockMovementType.ADD, "+ Sumar Entrada"),
-                new MovementOption(StockMovementType.SUBTRACT, "- Registrar Salida"),
-                new MovementOption(StockMovementType.SET, "= Conteo Exacto")
-        });
-        for (int i = 0; i < modeCombo.getItemCount(); i++) {
-            if (modeCombo.getItemAt(i).type == initialMode) {
-                modeCombo.setSelectedIndex(i);
-                break;
-            }
-        }
-
-        JTextField qtyField = new JTextField(12);
+        JTextField qtyField = new JTextField(14);
         qtyField.setBorder(CulinaryTheme.fieldBorder());
-        JTextField priceField = new JTextField(12);
-        priceField.setBorder(CulinaryTheme.fieldBorder());
-        JTextField dateField = new JTextField(12);
+        JLabel qtyFeedback = createFeedbackLabel();
+
+        JLabel dateLabel = new JLabel("Caducidad YYYY-MM-DD (opcional):");
+        dateLabel.setFont(CulinaryTheme.FONT_BODY_BOLD);
+        dateLabel.setForeground(CulinaryTheme.TEXT_PRIMARY);
+        JTextField dateField = new JTextField(14);
         dateField.setBorder(CulinaryTheme.fieldBorder());
         dateField.setToolTipText("Opcional: YYYY-MM-DD");
+        JLabel dateFeedback = createFeedbackLabel();
 
-        JLabel previewLabel = new JLabel("Selecciona un ingrediente y cantidad");
+        JLabel previewLabel = new JLabel(" ");
         previewLabel.setFont(CulinaryTheme.FONT_MONO_BOLD);
 
-        JButton saveBtn = CulinaryTheme.createPrimaryButton("Aplicar Movimiento");
+        JButton saveBtn = CulinaryTheme.createPrimaryButton("Guardar Cantidad");
         JButton cancelBtn = CulinaryTheme.createSecondaryButton("Cancelar");
         dialog.getRootPane().setDefaultButton(saveBtn);
+
+        Runnable syncFieldsFromSelection = () -> {
+            IngredientChoice ch = (IngredientChoice) ingCombo.getSelectedItem();
+            if (ch != null && ch.ingredient != null) {
+                qtyField.setText(formatPlainNumber(ch.ingredient.getStockQuantity()));
+                dateField.setText(ch.ingredient.getExpirationDate() != null
+                        ? ch.ingredient.getExpirationDate().toString() : "");
+            } else {
+                qtyField.setText("");
+                dateField.setText("");
+            }
+        };
 
         Runnable updatePreview = () -> {
             IngredientChoice selected = (IngredientChoice) ingCombo.getSelectedItem();
             Ingredient ing = selected == null ? null : selected.ingredient;
             if (ing == null) {
-                previewLabel.setText("⚠ Selecciona un ingrediente del catálogo.");
+                ingFeedback.setText("Selecciona un ingrediente del catálogo para ajustar su stock.");
+                ingFeedback.setForeground(CulinaryTheme.TEXT_SECONDARY);
+                qtyField.setEnabled(false);
+                qtyField.setBorder(CulinaryTheme.fieldBorder());
+                qtyFeedback.setText(" ");
+                dateLabel.setVisible(false);
+                dateField.setVisible(false);
+                dateFeedback.setVisible(false);
+                previewLabel.setText("Vista previa: selecciona un ingrediente");
                 previewLabel.setForeground(CulinaryTheme.TEXT_SECONDARY);
-                dateField.setEnabled(false);
                 saveBtn.setEnabled(false);
                 return;
             }
 
-            dateField.setEnabled(ing.isPerishable());
+            ingFeedback.setText(String.format(Locale.US, "Stock actual: %.2f %s | Precio catálogo: %s/%s (solo lectura)",
+                    ing.getStockQuantity(), ing.getUnit().getSymbol(),
+                    CurrencyFormatter.formatUSD(ing.getUnitPrice()), ing.getUnit().getSymbol()));
+            ingFeedback.setForeground(CulinaryTheme.OK_GREEN);
+
+            qtyField.setEnabled(true);
             String qtyTxt = qtyField.getText().trim();
-            if (!InputRegexValidator.isValidPositiveDecimal(qtyTxt)) {
-                previewLabel.setText(String.format(Locale.US, "Stock actual: %.2f %s -> Ingresa cantidad válida",
-                        ing.getStockQuantity(), ing.getUnit().getSymbol()));
-                previewLabel.setForeground(CulinaryTheme.TEXT_SECONDARY);
-                saveBtn.setEnabled(false);
-                return;
+            boolean qtyOk = false;
+            double nextQty = 0.0;
+            if (qtyTxt.isEmpty()) {
+                setFieldBorderState(qtyField, qtyFeedback,
+                        "Campo obligatorio (usa número >= 0, ej. 5000).", CulinaryTheme.TEXT_SECONDARY, false);
+            } else if (!InputRegexValidator.isValidPositiveDecimal(qtyTxt)) {
+                setFieldBorderState(qtyField, qtyFeedback,
+                        "⚠ Cantidad inválida. Usa número >= 0 (ej. 5000).", CulinaryTheme.ALERT_RED, true);
+            } else {
+                nextQty = Double.parseDouble(qtyTxt);
+                setFieldBorderState(qtyField, qtyFeedback,
+                        "✓ Cantidad válida (" + qtyTxt + " " + ing.getUnit().getSymbol() + ")",
+                        CulinaryTheme.OK_GREEN, false);
+                qtyOk = true;
             }
 
-            double qty = Double.parseDouble(qtyTxt);
-            StockMovementType mode = ((MovementOption) modeCombo.getSelectedItem()).type;
-            double next = switch (mode) {
-                case ADD -> ing.getStockQuantity() + qty;
-                case SUBTRACT -> ing.getStockQuantity() - qty;
-                case SET -> qty;
-            };
+            boolean perishable = ing.isPerishable();
+            dateLabel.setVisible(perishable);
+            dateField.setVisible(perishable);
+            dateFeedback.setVisible(perishable);
+            boolean dateOk = true;
+            if (perishable) {
+                String dateTxt = dateField.getText().trim();
+                if (dateTxt.isEmpty()) {
+                    setFieldBorderState(dateField, dateFeedback,
+                            "Opcional (formato YYYY-MM-DD).", CulinaryTheme.TEXT_SECONDARY, false);
+                } else if (!isValidCalendarIsoDate(dateTxt)) {
+                    setFieldBorderState(dateField, dateFeedback,
+                            "⚠ Fecha inválida. Usa YYYY-MM-DD (ej. 2026-12-15).", CulinaryTheme.ALERT_RED, true);
+                    dateOk = false;
+                } else {
+                    setFieldBorderState(dateField, dateFeedback,
+                            "✓ Fecha válida", CulinaryTheme.OK_GREEN, false);
+                }
+            }
 
-            String priceTxt = priceField.getText().trim();
-            boolean priceOk = priceTxt.isEmpty() || InputRegexValidator.isValidPositiveDecimal(priceTxt);
-            String dateTxt = dateField.getText().trim();
-            boolean dateOk = !ing.isPerishable() || dateTxt.isEmpty() || InputRegexValidator.isValidIsoDate(dateTxt);
-
-            if (next < 0) {
+            if (qtyOk && dateOk) {
+                double newRawValue = nextQty * ing.getUnitPrice();
                 previewLabel.setText(String.format(Locale.US,
-                        "⚠ Error: %.2f -> %.2f %s (Stock negativo no permitido)",
-                        ing.getStockQuantity(), next, ing.getUnit().getSymbol()));
-                previewLabel.setForeground(CulinaryTheme.ALERT_RED);
-                saveBtn.setEnabled(false);
-            } else if (!priceOk) {
-                previewLabel.setText("⚠ Precio opcional inválido (usa decimal positivo).");
-                previewLabel.setForeground(CulinaryTheme.ALERT_RED);
-                saveBtn.setEnabled(false);
-            } else if (!dateOk) {
-                previewLabel.setText("⚠ Fecha inválida (formato YYYY-MM-DD).");
-                previewLabel.setForeground(CulinaryTheme.ALERT_RED);
-                saveBtn.setEnabled(false);
-            } else {
-                previewLabel.setText(String.format(Locale.US, "Vista previa: %.2f -> %.2f %s",
-                        ing.getStockQuantity(), next, ing.getUnit().getSymbol()));
-                previewLabel.setForeground(CulinaryTheme.OK_GREEN);
+                        "Nuevo Stock: %.2f -> %.2f %s | Valor: %s",
+                        ing.getStockQuantity(), nextQty, ing.getUnit().getSymbol(),
+                        CurrencyFormatter.formatUSD(newRawValue)));
+                previewLabel.setForeground(CulinaryTheme.ACCENT_APRICOT);
                 saveBtn.setEnabled(true);
+            } else {
+                previewLabel.setText("⚠ Corrige los campos pendientes antes de guardar.");
+                previewLabel.setForeground(CulinaryTheme.ALERT_RED);
+                saveBtn.setEnabled(false);
             }
         };
 
         ingCombo.addActionListener(e -> {
-            IngredientChoice ch = (IngredientChoice) ingCombo.getSelectedItem();
-            if (ch != null && ch.ingredient != null && ch.ingredient.getExpirationDate() != null) {
-                dateField.setText(ch.ingredient.getExpirationDate().toString());
-            } else {
-                dateField.setText("");
-            }
+            syncFieldsFromSelection.run();
             updatePreview.run();
+            dialog.pack();
         });
-        modeCombo.addActionListener(e -> updatePreview.run());
         qtyField.getDocument().addDocumentListener(new SimpleDoc(updatePreview));
-        priceField.getDocument().addDocumentListener(new SimpleDoc(updatePreview));
         dateField.getDocument().addDocumentListener(new SimpleDoc(updatePreview));
 
         int r = 0;
         addFormRow(form, gbc, r++, "Ingrediente del Catálogo *:", ingCombo);
-        addFormRow(form, gbc, r++, "Tipo de Operación *:", modeCombo);
-        addFormRow(form, gbc, r++, "Cantidad *:", qtyField);
-        addFormRow(form, gbc, r++, "Nuevo Precio USD (opcional):", priceField);
-        addFormRow(form, gbc, r++, "Caducidad YYYY-MM-DD (opcional):", dateField);
-        gbc.gridx = 1;
+        addFeedbackRow(form, gbc, r++, ingFeedback);
+        addFormRow(form, gbc, r++, "Nueva Cantidad en Stock *:", qtyField);
+        addFeedbackRow(form, gbc, r++, qtyFeedback);
+
+        gbc.gridx = 0;
         gbc.gridy = r;
-        form.add(previewLabel, gbc);
+        gbc.weightx = 0.0;
+        form.add(dateLabel, gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        form.add(dateField, gbc);
+        r++;
+        addFeedbackRow(form, gbc, r++, dateFeedback);
+
+        addFeedbackRow(form, gbc, r, previewLabel);
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 12));
         buttons.setBackground(CulinaryTheme.BG_MAIN);
@@ -354,15 +364,13 @@ public class InventoryPanel extends JPanel {
         saveBtn.addActionListener(e -> {
             try {
                 IngredientChoice ch = (IngredientChoice) ingCombo.getSelectedItem();
-                StockMovementType mode = ((MovementOption) modeCombo.getSelectedItem()).type;
                 double qty = Double.parseDouble(qtyField.getText().trim());
-                String pTxt = priceField.getText().trim();
-                Double newPrice = pTxt.isEmpty() ? null : Double.parseDouble(pTxt);
                 String dTxt = dateField.getText().trim();
                 LocalDate expDate = (ch.ingredient.isPerishable() && !dTxt.isEmpty())
                         ? LocalDate.parse(dTxt) : null;
 
-                inventoryService.applyMovement(ch.ingredient.getId(), mode, qty, newPrice, expDate);
+                inventoryService.applyMovement(
+                        ch.ingredient.getId(), StockMovementType.SET, qty, null, expDate);
                 dialog.dispose();
                 refreshData();
                 onDataChanged.run();
@@ -375,10 +383,47 @@ public class InventoryPanel extends JPanel {
 
         dialog.add(form, BorderLayout.CENTER);
         dialog.add(buttons, BorderLayout.SOUTH);
+        syncFieldsFromSelection.run();
         updatePreview.run();
         dialog.pack();
         dialog.setLocationRelativeTo(owner);
         dialog.setVisible(true);
+    }
+
+    private static JLabel createFeedbackLabel() {
+        JLabel lbl = new JLabel(" ");
+        lbl.setFont(CulinaryTheme.FONT_SMALL);
+        return lbl;
+    }
+
+    private static void setFieldBorderState(
+            JTextField field, JLabel feedback, String text, Color color, boolean error) {
+        feedback.setText(text);
+        feedback.setForeground(color);
+        field.setBorder(error
+                ? BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(CulinaryTheme.ALERT_RED, 1),
+                        BorderFactory.createEmptyBorder(6, 8, 6, 8))
+                : CulinaryTheme.fieldBorder());
+    }
+
+    private static boolean isValidCalendarIsoDate(String text) {
+        if (!InputRegexValidator.isValidIsoDate(text)) {
+            return false;
+        }
+        try {
+            LocalDate.parse(text);
+            return true;
+        } catch (DateTimeParseException ex) {
+            return false;
+        }
+    }
+
+    private static String formatPlainNumber(double value) {
+        if (value == 0.0) {
+            return "0";
+        }
+        return java.math.BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
     }
 
     private static void addFormRow(JPanel form, GridBagConstraints gbc, int row, String label, java.awt.Component comp) {
@@ -387,10 +432,18 @@ public class InventoryPanel extends JPanel {
         gbc.weightx = 0.0;
         JLabel lbl = new JLabel(label);
         lbl.setFont(CulinaryTheme.FONT_BODY_BOLD);
+        lbl.setForeground(CulinaryTheme.TEXT_PRIMARY);
         form.add(lbl, gbc);
         gbc.gridx = 1;
         gbc.weightx = 1.0;
         form.add(comp, gbc);
+    }
+
+    private static void addFeedbackRow(JPanel form, GridBagConstraints gbc, int row, JLabel feedback) {
+        gbc.gridx = 1;
+        gbc.gridy = row;
+        gbc.weightx = 1.0;
+        form.add(feedback, gbc);
     }
 
     private record IngredientChoice(Ingredient ingredient) {
@@ -404,13 +457,6 @@ public class InventoryPanel extends JPanel {
                     ingredient.getName(),
                     ingredient.getStockQuantity(),
                     ingredient.getUnit().getSymbol());
-        }
-    }
-
-    private record MovementOption(StockMovementType type, String label) {
-        @Override
-        public String toString() {
-            return label;
         }
     }
 
