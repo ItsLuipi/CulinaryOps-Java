@@ -47,6 +47,7 @@ import javax.swing.table.DefaultTableModel;
 public class MoldCalculatorPanel extends JPanel {
 
     private static final double MIN_MOLD_CM = 0.1;
+    private static final double BATTER_DENSITY_FACTOR = 0.65;
 
     private final RecipeService recipeService;
     private final MoldCalculator moldCalculator;
@@ -151,8 +152,11 @@ public class MoldCalculatorPanel extends JPanel {
 
             originOpt.ifPresentOrElse(
                     m -> {
-                        kpiOrigVal.setText(String.format(Locale.US, "%.1f cm³", m.calculateVolumeCm3()));
-                        kpiOrigSub.setText(m.getShapeLabel() + " (" + m.getHeightCm() + " cm alto)");
+                        double vol = m.calculateVolumeCm3();
+                        kpiOrigVal.setText(String.format(Locale.US, "%.1f cm³", vol));
+                        kpiOrigSub.setText(String.format(Locale.US,
+                                "%s (%.1f cm) · Mezcla aprox.: %.0f gr",
+                                m.getShapeLabel(), m.getHeightCm(), vol * BATTER_DENSITY_FACTOR));
                     },
                     () -> {
                         kpiOrigVal.setText("-- cm³");
@@ -160,8 +164,11 @@ public class MoldCalculatorPanel extends JPanel {
                     });
             targetOpt.ifPresentOrElse(
                     m -> {
-                        kpiDestVal.setText(String.format(Locale.US, "%.1f cm³", m.calculateVolumeCm3()));
-                        kpiDestSub.setText(m.getShapeLabel() + " (" + m.getHeightCm() + " cm alto)");
+                        double vol = m.calculateVolumeCm3();
+                        kpiDestVal.setText(String.format(Locale.US, "%.1f cm³", vol));
+                        kpiDestSub.setText(String.format(Locale.US,
+                                "%s (%.1f cm) · Mezcla aprox.: %.0f gr",
+                                m.getShapeLabel(), m.getHeightCm(), vol * BATTER_DENSITY_FACTOR));
                     },
                     () -> {
                         kpiDestVal.setText("-- cm³");
@@ -340,7 +347,20 @@ public class MoldCalculatorPanel extends JPanel {
             }
             kpiMoldsVal.setText(String.valueOf(molds.size()));
             kpiMoldsSub.setText(molds.size() == 1 ? "1 molde activo" : molds.size() + " moldes activos");
+            double estimatedGrams = totalVol * BATTER_DENSITY_FACTOR;
             kpiVolVal.setText(String.format(Locale.US, "%.1f cm³", totalVol));
+            if (molds.isEmpty()) {
+                kpiVolSub.setText("Sin moldes activos (0 gr estimados)");
+            } else if (!gramsOk) {
+                kpiVolSub.setText(String.format(Locale.US,
+                        "Mezcla aprox.: %.0f gr · Factor receta: --", estimatedGrams));
+            } else {
+                double inputGrams = Double.parseDouble(gTxt);
+                double convFactor = estimatedGrams / inputGrams;
+                kpiVolSub.setText(String.format(Locale.US,
+                        "<html>Mezcla est.: <b>%.0f gr</b> · Factor receta: <b>%.3fx</b></html>",
+                        estimatedGrams, convFactor));
+            }
 
             boolean canDistribute = gramsOk && !molds.isEmpty();
             calcDistBtn.setEnabled(canDistribute);
@@ -562,7 +582,10 @@ public class MoldCalculatorPanel extends JPanel {
                 case SQUARE -> new SquareMold(moldName, v1, vh);
                 case RECTANGULAR -> new RectangularMold(moldName, v1, v2, vh);
             };
-            summaryFeedback.setText(String.format(Locale.US, "✓ Volumen estimado: %.1f cm³", mold.calculateVolumeCm3()));
+            double vol = mold.calculateVolumeCm3();
+            summaryFeedback.setText(String.format(Locale.US,
+                    "✓ Volumen estimado: %.1f cm³ (~%.0f gr de mezcla)",
+                    vol, vol * BATTER_DENSITY_FACTOR));
             summaryFeedback.setForeground(CulinaryTheme.OK_GREEN);
             return Optional.of(mold);
         }
