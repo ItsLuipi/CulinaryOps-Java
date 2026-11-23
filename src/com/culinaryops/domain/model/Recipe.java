@@ -124,11 +124,11 @@ public class Recipe extends BaseEntity implements Costable {
         for (RecipeIngredient item : ingredients) {
             double qty = item.getNetQuantity();
             totalGrams += switch (item.getUnit()) {
-                case G, ML ->
+                case Gr, ML ->
                     qty;
-                case KG, L ->
+                case KG, Lt ->
                     qty * 1000.0;
-                case U ->
+                case Und ->
                     qty * 55.0; // Peso aproximado de 1 huevo mediano = 55 g
             };
         }

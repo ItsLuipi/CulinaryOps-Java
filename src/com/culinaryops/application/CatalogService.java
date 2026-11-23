@@ -47,10 +47,21 @@ public class CatalogService implements IQueryService<Ingredient> {
             double unitPrice,
             double wastePercentage,
             boolean isPerishable) {
+        return createIngredient(name, category, unit, unitPrice, 1.0, wastePercentage, isPerishable);
+    }
+
+    public Ingredient createIngredient(
+            String name,
+            String category,
+            UnitType unit,
+            double purchasePrice,
+            double purchaseQuantity,
+            double wastePercentage,
+            boolean isPerishable) {
         validateNameAndDuplicate(name, null);
         String newId = generateNextId();
         Ingredient ingredient = new Ingredient(
-                newId, name, category, unit, unitPrice, wastePercentage, isPerishable);
+                newId, name, category, unit, purchasePrice, purchaseQuantity, wastePercentage, isPerishable);
         return ingredientRepository.save(ingredient);
     }
 
@@ -62,9 +73,22 @@ public class CatalogService implements IQueryService<Ingredient> {
             double unitPrice,
             double wastePercentage,
             boolean isPerishable) {
+        return updateIngredient(id, name, category, unit, unitPrice, 1.0, wastePercentage, isPerishable);
+    }
+
+    public Ingredient updateIngredient(
+            String id,
+            String name,
+            String category,
+            UnitType unit,
+            double purchasePrice,
+            double purchaseQuantity,
+            double wastePercentage,
+            boolean isPerishable) {
         Ingredient existing = findById(id);
         validateNameAndDuplicate(name, existing.getId());
-        existing.updateTechnicalSheet(name, category, unit, unitPrice, wastePercentage, isPerishable);
+        existing.updateTechnicalSheet(
+                name, category, unit, purchasePrice, purchaseQuantity, wastePercentage, isPerishable);
         return ingredientRepository.save(existing);
     }
 

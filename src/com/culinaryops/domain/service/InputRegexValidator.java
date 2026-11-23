@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 
 public final class InputRegexValidator {
 
-    public static final String NAME_REGEX = "^[\\p{L}0-9][\\p{L}0-9\\s.,%()/'\"-]{1,149}$";
+    public static final String NAME_REGEX = "^[\\p{L}0-9][\\p{L}0-9\\s.,%()/'\"&-]{1,149}$";
     public static final String ISO_DATE_REGEX = "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$";
     public static final String POSITIVE_DECIMAL_REGEX = "^\\d+(\\.\\d{1,4})?$";
     public static final String PERCENTAGE_REGEX = "^(100(\\.0{1,2})?|\\d{1,2}(\\.\\d{1,2})?)$";

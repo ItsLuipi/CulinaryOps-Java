@@ -18,6 +18,8 @@ public class Ingredient extends BaseEntity {
     private String name;
     private String category;
     private UnitType unit;
+    private double purchasePrice;
+    private double purchaseQuantity;
     private double unitPrice;
     private double stockQuantity;
     private double wastePercentage;
@@ -32,8 +34,20 @@ public class Ingredient extends BaseEntity {
             double unitPrice,
             double wastePercentage,
             boolean isPerishable) {
-        this(id, name, category, unit, unitPrice, 0.0, wastePercentage,
-             isPerishable, null, LocalDateTime.now(), LocalDateTime.now());
+        this(id, name, category, unit, unitPrice, 1.0, wastePercentage, isPerishable);
+    }
+
+    public Ingredient(
+            String id,
+            String name,
+            String category,
+            UnitType unit,
+            double purchasePrice,
+            double purchaseQuantity,
+            double wastePercentage,
+            boolean isPerishable) {
+        this(id, name, category, unit, purchasePrice, purchaseQuantity, 0.0,
+                wastePercentage, isPerishable, null, LocalDateTime.now(), LocalDateTime.now());
     }
 
     public Ingredient(
@@ -48,11 +62,30 @@ public class Ingredient extends BaseEntity {
             LocalDate expirationDate,
             LocalDateTime createdAt,
             LocalDateTime updatedAt) {
+        this(id, name, category, unit, unitPrice, 1.0, stockQuantity,
+                wastePercentage, isPerishable, expirationDate, createdAt, updatedAt);
+    }
+
+    public Ingredient(
+            String id,
+            String name,
+            String category,
+            UnitType unit,
+            double purchasePrice,
+            double purchaseQuantity,
+            double stockQuantity,
+            double wastePercentage,
+            boolean isPerishable,
+            LocalDate expirationDate,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt) {
         super(id, createdAt, updatedAt);
         this.name = validateName(name);
         this.category = normalizeCategory(category);
         this.unit = validateUnit(unit);
-        this.unitPrice = validateNonNegative(unitPrice, "El precio no puede ser menor a 0.");
+        this.purchasePrice = validateNonNegative(purchasePrice, "El precio no puede ser menor a 0.");
+        this.purchaseQuantity = validatePositiveQuantity(purchaseQuantity);
+        this.unitPrice = this.purchasePrice / this.purchaseQuantity;
         this.stockQuantity = validateNonNegative(stockQuantity, "La cantidad en el inventario no puede ser menor a 0.");
         this.wastePercentage = validateWastePercentage(wastePercentage);
         this.isPerishable = isPerishable;
@@ -84,6 +117,13 @@ public class Ingredient extends BaseEntity {
         return value;
     }
 
+    private static double validatePositiveQuantity(double value) {
+        if (value <= 0) {
+            throw new IllegalArgumentException("La cantidad por compra debe ser mayor a 0.");
+        }
+        return value;
+    }
+
     private static double validateWastePercentage(double wastePercentage) {
         if (wastePercentage < 0 || wastePercentage >= 100) {
             throw new IllegalArgumentException("El porcentaje no puede ser menor a 0 o mayor/igual a 100.");
@@ -101,6 +141,14 @@ public class Ingredient extends BaseEntity {
 
     public UnitType getUnit() {
         return unit;
+    }
+
+    public double getPurchasePrice() {
+        return purchasePrice;
+    }
+
+    public double getPurchaseQuantity() {
+        return purchaseQuantity;
     }
 
     public double getUnitPrice() {
@@ -130,10 +178,27 @@ public class Ingredient extends BaseEntity {
             double unitPrice,
             double wastePercentage,
             boolean isPerishable) {
+        updateTechnicalSheet(name, category, unit, unitPrice, 1.0, wastePercentage, isPerishable);
+    }
+
+    public void updateTechnicalSheet(
+            String name,
+            String category,
+            UnitType unit,
+            double purchasePrice,
+            double purchaseQuantity,
+            double wastePercentage,
+            boolean isPerishable) {
         this.name = validateName(name);
         this.category = normalizeCategory(category);
-        this.unit = validateUnit(unit);
-        this.unitPrice = validateNonNegative(unitPrice, "El precio no puede ser menor a 0.");
+        UnitType nextUnit = validateUnit(unit);
+        if (this.unit != nextUnit) {
+            this.stockQuantity = 0.0; // Evita multiplicar stock antiguo (ej. gramos) como la nueva unidad
+        }
+        this.unit = nextUnit;
+        this.purchasePrice = validateNonNegative(purchasePrice, "El precio no puede ser menor a 0.");
+        this.purchaseQuantity = validatePositiveQuantity(purchaseQuantity);
+        this.unitPrice = this.purchasePrice / this.purchaseQuantity;
         this.wastePercentage = validateWastePercentage(wastePercentage);
         this.isPerishable = isPerishable;
         if (!isPerishable) {
@@ -174,6 +239,8 @@ public class Ingredient extends BaseEntity {
 
         this.stockQuantity = nextStock;
         if (updatedUnitPrice != null) {
+            this.purchasePrice = updatedUnitPrice;
+            this.purchaseQuantity = 1.0;
             this.unitPrice = updatedUnitPrice;
         }
         if (this.isPerishable && newExpirationDate != null) {

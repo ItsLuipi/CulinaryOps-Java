@@ -110,14 +110,14 @@ public class Part3Main {
         LocalDate today = LocalDate.now();
         LocalDateTime now = LocalDateTime.now();
         return List.of(
-                new Ingredient("ing-1", "Huevos de campo", "Lácteos y Huevos", UnitType.G, 0.0032, 12500, 15.0, true, today.plusDays(7), now, now),
-                new Ingredient("ing-2", "Azúcar común refinada", "Secos y Endulzantes", UnitType.G, 0.0014, 35000, 1.0, false, null, now, now),
-                new Ingredient("ing-3", "Harina 0000 de repostería", "Harinas y Almidones", UnitType.G, 0.0011, 40000, 2.0, false, null, now, now),
-                new Ingredient("ing-4", "Mantequilla sin sal 82% MG", "Lácteos y Grasas", UnitType.G, 0.0085, 6000, 3.0, true, today.plusDays(20), now, now),
-                new Ingredient("ing-5", "Chocolate Cobertura 70% Cacao", "Chocolates y Coberturas", UnitType.G, 0.014, 8500, 5.0, false, null, now, now),
-                new Ingredient("ing-6", "Fresas / Frutillas seleccionadas", "Frutas y Frescos", UnitType.G, 0.0048, 3000, 18.0, true, today.plusDays(3), now, now),
-                new Ingredient("ing-7", "Crema de leche / Nata 35% MG", "Lácteos y Grasas", UnitType.L, 4.50, 5.0, 4.0, true, today.plusDays(5), now, now),
-                new Ingredient("ing-8", "Extracto de vainilla natural", "Aromas y Esencias", UnitType.G, 0.12, 250, 2.0, false, null, now, now)
+                new Ingredient("ing-1", "Huevos de campo", "Lácteos y Huevos", UnitType.Gr, 0.0032, 12500, 15.0, true, today.plusDays(7), now, now),
+                new Ingredient("ing-2", "Azúcar común refinada", "Secos y Endulzantes", UnitType.Gr, 0.0014, 35000, 1.0, false, null, now, now),
+                new Ingredient("ing-3", "Harina 0000 de repostería", "Harinas y Almidones", UnitType.Gr, 0.0011, 40000, 2.0, false, null, now, now),
+                new Ingredient("ing-4", "Mantequilla sin sal 82% MG", "Lácteos y Grasas", UnitType.Gr, 0.0085, 6000, 3.0, true, today.plusDays(20), now, now),
+                new Ingredient("ing-5", "Chocolate Cobertura 70% Cacao", "Chocolates y Coberturas", UnitType.Gr, 0.014, 8500, 5.0, false, null, now, now),
+                new Ingredient("ing-6", "Fresas / Frutillas seleccionadas", "Frutas y Frescos", UnitType.Gr, 0.0048, 3000, 18.0, true, today.plusDays(3), now, now),
+                new Ingredient("ing-7", "Crema de leche / Nata 35% MG", "Lácteos y Grasas", UnitType.ML, 0.0045, 5000.0, 4.0, true, today.plusDays(5), now, now),
+                new Ingredient("ing-8", "Extracto de vainilla natural", "Aromas y Esencias", UnitType.Gr, 0.12, 250, 2.0, false, null, now, now)
         );
     }
 }

@@ -9,11 +9,11 @@ package com.culinaryops.domain.model.enums;
  * @author Luipi
  */
 public enum UnitType {
-    G("g"),
+    Gr("gr"),
     KG("kg"),
     ML("ml"),
-    L("l"),
-    U("u");
+    Lt("lt"),
+    Und("und");
     
     private final String symbol;
     UnitType(String symbol) {
