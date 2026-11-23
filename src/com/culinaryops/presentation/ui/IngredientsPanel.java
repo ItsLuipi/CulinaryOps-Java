@@ -263,12 +263,16 @@ public class IngredientsPanel extends JPanel {
         JSlider wasteSlider = CulinaryTheme.createStyledSlider(0, 100, initialSteps);
         JLabel wasteValueLabel = new JLabel();
         wasteValueLabel.setFont(CulinaryTheme.FONT_MONO_BOLD);
+        JLabel unitChangeFeedback = new JLabel(" ");
+        unitChangeFeedback.setFont(CulinaryTheme.FONT_SMALL);
         JLabel unitPricePreview = new JLabel();
         unitPricePreview.setFont(CulinaryTheme.FONT_MONO_BOLD);
         unitPricePreview.setForeground(CulinaryTheme.TEXT_PRIMARY);
         JLabel effectivePreview = new JLabel();
         effectivePreview.setFont(CulinaryTheme.FONT_MONO_BOLD);
         effectivePreview.setForeground(CulinaryTheme.ACCENT_APRICOT);
+        JLabel stockImpactPreview = new JLabel(" ");
+        stockImpactPreview.setFont(CulinaryTheme.FONT_SMALL);
 
         JCheckBox perishableCheck = new JCheckBox("Es un ingrediente perecedero",
                 editing != null && editing.isPerishable());
@@ -328,6 +332,20 @@ public class IngredientsPanel extends JPanel {
                 purchaseQtyFeedback.setForeground(CulinaryTheme.OK_GREEN);
             }
 
+            boolean unitChangedWithStock = editing != null
+                    && editing.getStockQuantity() > 0
+                    && selectedUnit != null
+                    && selectedUnit != editing.getUnit();
+            if (unitChangedWithStock) {
+                unitChangeFeedback.setText(String.format(Locale.US,
+                        "⚠ Al cambiar de %s a %s, el stock actual (%.2f %s) se reiniciará a 0 en Inventario.",
+                        editing.getUnit().getSymbol(), unitSym,
+                        editing.getStockQuantity(), editing.getUnit().getSymbol()));
+                unitChangeFeedback.setForeground(CulinaryTheme.ALERT_AMBER);
+            } else {
+                unitChangeFeedback.setText(" ");
+            }
+
             if (validPrice && validPurchaseQty) {
                 double p = Double.parseDouble(priceTxt);
                 double q = Double.parseDouble(purchaseQtyTxt);
@@ -337,9 +355,19 @@ public class IngredientsPanel extends JPanel {
                         + "/" + unitSym + " (compra / cantidad)");
                 effectivePreview.setText("Costo Real Útil (con merma): " + CurrencyFormatter.formatUSD(eff)
                         + "/" + unitSym);
+                if (editing != null) {
+                    double projectedStock = unitChangedWithStock ? 0.0 : editing.getStockQuantity();
+                    stockImpactPreview.setText(String.format(Locale.US,
+                            "Impacto en Inventario: stock %.2f %s -> Valor: %s",
+                            projectedStock, unitSym,
+                            CurrencyFormatter.formatUSD(projectedStock * unitPrice)));
+                    stockImpactPreview.setForeground(unitChangedWithStock
+                            ? CulinaryTheme.ALERT_AMBER : CulinaryTheme.TEXT_SECONDARY);
+                }
             } else {
                 unitPricePreview.setText("Precio Unitario Base: ingresa precio y cantidad > 0");
                 effectivePreview.setText("Costo Real Útil (con merma): pendiente de datos válidos");
+                stockImpactPreview.setText(" ");
             }
 
             boolean perishable = perishableCheck.isSelected();
@@ -399,6 +427,9 @@ public class IngredientsPanel extends JPanel {
         form.add(nameFeedback, gbc);
         addRow(form, gbc, row++, "Categoría *:", categoryBox);
         addRow(form, gbc, row++, "Unidad Base:", unitBox);
+        gbc.gridx = 1;
+        gbc.gridy = row++;
+        form.add(unitChangeFeedback, gbc);
         addRow(form, gbc, row++, "Precio de Compra (USD) *:", priceField);
         gbc.gridx = 1;
         gbc.gridy = row++;
@@ -421,6 +452,12 @@ public class IngredientsPanel extends JPanel {
         gbc.gridx = 1;
         gbc.gridy = row++;
         form.add(effectivePreview, gbc);
+
+        if (editing != null) {
+            gbc.gridx = 1;
+            gbc.gridy = row++;
+            form.add(stockImpactPreview, gbc);
+        }
 
         gbc.gridx = 1;
         gbc.gridy = row++;

@@ -191,7 +191,11 @@ public class Ingredient extends BaseEntity {
             boolean isPerishable) {
         this.name = validateName(name);
         this.category = normalizeCategory(category);
-        this.unit = validateUnit(unit);
+        UnitType nextUnit = validateUnit(unit);
+        if (this.unit != nextUnit) {
+            this.stockQuantity = 0.0; // Evita multiplicar stock antiguo (ej. gramos) como la nueva unidad
+        }
+        this.unit = nextUnit;
         this.purchasePrice = validateNonNegative(purchasePrice, "El precio no puede ser menor a 0.");
         this.purchaseQuantity = validatePositiveQuantity(purchaseQuantity);
         this.unitPrice = this.purchasePrice / this.purchaseQuantity;
