@@ -47,7 +47,7 @@ import javax.swing.table.DefaultTableModel;
 public class MoldCalculatorPanel extends JPanel {
 
     private static final double MIN_MOLD_CM = 0.1;
-    private static final double BATTER_DENSITY_FACTOR = 0.65;
+    private static final double BATTER_DENSITY_FACTOR = 0.60;
 
     private final RecipeService recipeService;
     private final MoldCalculator moldCalculator;
@@ -209,7 +209,7 @@ public class MoldCalculatorPanel extends JPanel {
         root.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 
         JLabel kpiGramsVal = CulinaryTheme.createKpiLabel("0 gr");
-        JLabel kpiGramsSub = new JLabel("Para llenar moldes (0.65)");
+        JLabel kpiGramsSub = new JLabel("Para llenar moldes (0.60)");
         JLabel kpiMoldsVal = CulinaryTheme.createKpiLabel("2");
         JLabel kpiMoldsSub = new JLabel("Moldes seleccionados");
         JLabel kpiVolVal = CulinaryTheme.createKpiLabel("0.0 cm³");
@@ -235,11 +235,22 @@ public class MoldCalculatorPanel extends JPanel {
         JLabel gramsFeedback = createFeedbackLabel();
 
         DefaultListModel<BakingMold> moldListModel = new DefaultListModel<>();
-        moldListModel.addElement(new RoundMold("Molde 15 cm", 15.0, 5.0));
-        moldListModel.addElement(new RoundMold("Molde 20 cm", 20.0, 5.0));
+        moldListModel.addElement(new RoundMold("Molde #1", 15.0, 5.0));
+        moldListModel.addElement(new RoundMold("Molde #2", 20.0, 5.0));
         JList<BakingMold> moldList = new JList<>(moldListModel);
         moldList.setFont(CulinaryTheme.FONT_BODY);
         moldList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        moldList.setCellRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(
+                    JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof BakingMold m) {
+                    setText(m.getName() + " — " + m.getShapeLabel() + " " + formatMoldSize(m));
+                }
+                return this;
+            }
+        });
 
         MoldFormInputs newMoldInputs = new MoldFormInputs("Nuevo Molde", MoldShape.ROUND, "24", "12", "5");
         JButton addMoldBtn = CulinaryTheme.createSecondaryButton("+ Agregar Molde");
@@ -344,7 +355,7 @@ public class MoldCalculatorPanel extends JPanel {
             }
             double estimatedGrams = totalVol * BATTER_DENSITY_FACTOR;
             kpiGramsVal.setText(String.format(Locale.US, "%.0f gr", estimatedGrams));
-            kpiGramsSub.setText(molds.isEmpty() ? "Sin moldes activos" : "Para llenar los moldes (0.65)");
+            kpiGramsSub.setText(molds.isEmpty() ? "Sin moldes activos" : "Para llenar los moldes (0.60)");
 
             kpiMoldsVal.setText(String.valueOf(molds.size()));
             kpiMoldsSub.setText(molds.size() == 1 ? "1 molde activo" : molds.size() + " moldes activos");
@@ -382,9 +393,11 @@ public class MoldCalculatorPanel extends JPanel {
                 }
                 MoldDistributionResult res = moldCalculator.distributeMixture(estimatedGrams, molds);
                 distModel.setRowCount(0);
-                for (MoldDistributionResult.MoldAllocation a : res.getAllocations()) {
+                for (int i = 0; i < res.getAllocations().size(); i++) {
+                    MoldDistributionResult.MoldAllocation a = res.getAllocations().get(i);
+                    String size = formatMoldSize(molds.get(i));
                     distModel.addRow(new Object[]{
-                            a.getMoldName(),
+                            a.getMoldName() + " (" + size + ")",
                             a.getShapeLabel(),
                             String.format(Locale.US, "%.1f", a.getVolumeCm3()),
                             String.format(Locale.US, "%.1f%%", a.getProportionPercentage()),
@@ -450,6 +463,26 @@ public class MoldCalculatorPanel extends JPanel {
             case RECTANGULAR -> "Rectangular";
             case SQUARE -> "Cuadrado";
         };
+    }
+
+    private static String formatMoldSize(BakingMold mold) {
+        if (mold instanceof RoundMold r) {
+            return formatCm(r.getDiameterCm()) + "x" + formatCm(r.getHeightCm()) + " cm";
+        }
+        if (mold instanceof SquareMold s) {
+            return formatCm(s.getSideCm()) + "x" + formatCm(s.getSideCm()) + "x" + formatCm(s.getHeightCm()) + " cm";
+        }
+        if (mold instanceof RectangularMold rect) {
+            return formatCm(rect.getLengthCm()) + "x" + formatCm(rect.getWidthCm()) + "x" + formatCm(rect.getHeightCm()) + " cm";
+        }
+        return formatCm(mold.getHeightCm()) + " cm";
+    }
+
+    private static String formatCm(double value) {
+        if (value == 0.0) {
+            return "0";
+        }
+        return java.math.BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
     }
 
     /**
