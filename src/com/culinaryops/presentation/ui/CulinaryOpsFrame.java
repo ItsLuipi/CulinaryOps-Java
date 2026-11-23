@@ -139,10 +139,10 @@ public class CulinaryOpsFrame extends JFrame {
 
         addNavButton(sidebar, CARD_DASHBOARD, "1. Resumen");
         addNavButton(sidebar, CARD_INGREDIENTS, "2. Ingredientes");
-        addNavButton(sidebar, CARD_INVENTORY, "3. Inventario");
-        addNavButton(sidebar, CARD_RECIPES, "4. Recetas");
-        addNavButton(sidebar, CARD_BUDGETS, "5. Presupuestos");
-        addNavButton(sidebar, CARD_MOLDS, "6. Moldes");
+        addNavButton(sidebar, CARD_RECIPES, "3. Recetas");
+        addNavButton(sidebar, CARD_BUDGETS, "4. Presupuestos");
+        addNavButton(sidebar, CARD_MOLDS, "5. Moldes");
+        addNavButton(sidebar, CARD_INVENTORY, "6. Inventario");
 
         sidebar.add(Box.createVerticalGlue());
 
