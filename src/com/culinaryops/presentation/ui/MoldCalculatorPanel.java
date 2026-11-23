@@ -208,16 +208,16 @@ public class MoldCalculatorPanel extends JPanel {
         root.setBackground(CulinaryTheme.BG_MAIN);
         root.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 
-        JLabel kpiGramsVal = CulinaryTheme.createKpiLabel("1500 gr");
-        JLabel kpiGramsSub = new JLabel("Peso total de preparación");
+        JLabel kpiGramsVal = CulinaryTheme.createKpiLabel("0 gr");
+        JLabel kpiGramsSub = new JLabel("Para llenar moldes (0.65)");
         JLabel kpiMoldsVal = CulinaryTheme.createKpiLabel("2");
         JLabel kpiMoldsSub = new JLabel("Moldes seleccionados");
         JLabel kpiVolVal = CulinaryTheme.createKpiLabel("0.0 cm³");
-        JLabel kpiVolSub = new JLabel("Suma de capacidades");
+        JLabel kpiVolSub = new JLabel("Factor receta: --");
 
         JPanel kpiRow = new JPanel(new GridLayout(1, 3, 12, 0));
         kpiRow.setOpaque(false);
-        kpiRow.add(CulinaryTheme.buildKpiCard("Masa Total a Repartir", kpiGramsVal, kpiGramsSub, false));
+        kpiRow.add(CulinaryTheme.buildKpiCard("Mezcla Estimada", kpiGramsVal, kpiGramsSub, false));
         kpiRow.add(CulinaryTheme.buildKpiCard("Moldes Activos", kpiMoldsVal, kpiMoldsSub, false));
         kpiRow.add(CulinaryTheme.buildKpiCard("Volumen Combinado", kpiVolVal, kpiVolSub, true));
         root.add(kpiRow, BorderLayout.NORTH);
@@ -323,15 +323,12 @@ public class MoldCalculatorPanel extends JPanel {
             if (gTxt.isEmpty()) {
                 setFieldBorderState(totalGramsField, gramsFeedback,
                         "Campo obligatorio (ej. 1500 gr).", CulinaryTheme.TEXT_SECONDARY, false);
-                kpiGramsVal.setText("-- gr");
             } else if (!gramsOk) {
                 setFieldBorderState(totalGramsField, gramsFeedback,
                         "⚠ Ingresa peso > 0 gr (ej. 1500).", CulinaryTheme.ALERT_RED, true);
-                kpiGramsVal.setText("-- gr");
             } else {
                 setFieldBorderState(totalGramsField, gramsFeedback,
                         "✓ Peso válido (" + gTxt + " gr)", CulinaryTheme.OK_GREEN, false);
-                kpiGramsVal.setText(gTxt + " gr");
             }
 
             Optional<BakingMold> newMoldOpt = newMoldInputs.validateAndBuild("Molde #" + (moldListModel.size() + 1));
@@ -345,44 +342,45 @@ public class MoldCalculatorPanel extends JPanel {
                 molds.add(m);
                 totalVol += m.calculateVolumeCm3();
             }
+            double estimatedGrams = totalVol * BATTER_DENSITY_FACTOR;
+            kpiGramsVal.setText(String.format(Locale.US, "%.0f gr", estimatedGrams));
+            kpiGramsSub.setText(molds.isEmpty() ? "Sin moldes activos" : "Para llenar los moldes (0.65)");
+
             kpiMoldsVal.setText(String.valueOf(molds.size()));
             kpiMoldsSub.setText(molds.size() == 1 ? "1 molde activo" : molds.size() + " moldes activos");
-            double estimatedGrams = totalVol * BATTER_DENSITY_FACTOR;
             kpiVolVal.setText(String.format(Locale.US, "%.1f cm³", totalVol));
             if (molds.isEmpty()) {
-                kpiVolSub.setText("Sin moldes activos (0 gr estimados)");
+                kpiVolSub.setText("Factor receta: --");
             } else if (!gramsOk) {
-                kpiVolSub.setText(String.format(Locale.US,
-                        "Mezcla aprox.: %.0f gr · Factor receta: --", estimatedGrams));
+                kpiVolSub.setText("Factor receta: -- (ingresa peso)");
             } else {
                 double inputGrams = Double.parseDouble(gTxt);
                 double convFactor = estimatedGrams / inputGrams;
                 kpiVolSub.setText(String.format(Locale.US,
-                        "<html>Mezcla est.: <b>%.0f gr</b> · Factor receta: <b>%.3fx</b></html>",
-                        estimatedGrams, convFactor));
+                        "<html>Factor receta: <b>%.3fx</b></html>", convFactor));
             }
 
-            boolean canDistribute = gramsOk && !molds.isEmpty();
+            boolean canDistribute = !molds.isEmpty() && estimatedGrams > 0;
             calcDistBtn.setEnabled(canDistribute);
 
             if (molds.isEmpty()) {
                 distStatusLabel.setText("⚠ Agrega al menos 1 molde válido a la lista para repartir la masa.");
                 distStatusLabel.setForeground(CulinaryTheme.ALERT_RED);
                 distModel.setRowCount(0);
-            } else if (!gramsOk) {
-                distStatusLabel.setText("⚠ Corrige el peso total de masa (> 0 gr) para calcular el reparto.");
-                distStatusLabel.setForeground(CulinaryTheme.ALERT_RED);
             } else {
-                if (newMoldOpt.isPresent()) {
+                if (!gramsOk) {
+                    distStatusLabel.setText("⚠ Ingresa un peso de receta > 0 gr para calcular el factor de conversión.");
+                    distStatusLabel.setForeground(CulinaryTheme.ALERT_AMBER);
+                } else if (newMoldOpt.isPresent()) {
                     distStatusLabel.setText(String.format(Locale.US,
-                            "✓ Nuevo molde listo (+%.1f cm³) | Reparto calculado para %.0f gr.",
-                            newMoldOpt.get().calculateVolumeCm3(), Double.parseDouble(gTxt)));
+                            "✓ Nuevo molde listo (+%.1f cm³) | Mezcla estimada: %.0f gr.",
+                            newMoldOpt.get().calculateVolumeCm3(), estimatedGrams));
                     distStatusLabel.setForeground(CulinaryTheme.OK_GREEN);
                 } else {
                     distStatusLabel.setText("⚠ Las medidas para agregar un nuevo molde deben ser >= 0.1 cm.");
                     distStatusLabel.setForeground(CulinaryTheme.ALERT_AMBER);
                 }
-                MoldDistributionResult res = moldCalculator.distributeMixture(Double.parseDouble(gTxt), molds);
+                MoldDistributionResult res = moldCalculator.distributeMixture(estimatedGrams, molds);
                 distModel.setRowCount(0);
                 for (MoldDistributionResult.MoldAllocation a : res.getAllocations()) {
                     distModel.addRow(new Object[]{
