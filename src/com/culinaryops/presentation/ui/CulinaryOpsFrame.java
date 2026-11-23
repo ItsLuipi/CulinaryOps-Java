@@ -34,7 +34,8 @@ public class CulinaryOpsFrame extends JFrame {
     private static final String CARD_INVENTORY = "inventory";
     private static final String CARD_RECIPES = "recipes";
     private static final String CARD_BUDGETS = "budgets";
-    private static final String CARD_ASSISTANT = "assistant";
+    private static final String CARD_MOLDS = "molds";
+    private static final String CARD_ASSISTANT = "faq";
 
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel contentArea = new JPanel(cardLayout);
@@ -45,6 +46,7 @@ public class CulinaryOpsFrame extends JFrame {
     private final InventoryPanel inventoryPanel;
     private final RecipesPanel recipesPanel;
     private final BudgetsPanel budgetsPanel;
+    private final MoldCalculatorPanel moldCalculatorPanel;
     private final AssistantPanel assistantPanel;
 
     public CulinaryOpsFrame(
@@ -79,11 +81,12 @@ public class CulinaryOpsFrame extends JFrame {
                 budgetService,
                 recipeService,
                 refreshAll);
+        this.moldCalculatorPanel = new MoldCalculatorPanel(
+                recipeService,
+                moldCalculator);
         this.assistantPanel = new AssistantPanel(
                 inventoryService,
-                recipeService,
-                assistant,
-                moldCalculator);
+                assistant);
         this.dashboardPanel = new DashboardPanel(
                 catalogService,
                 inventoryService,
@@ -104,6 +107,7 @@ public class CulinaryOpsFrame extends JFrame {
         contentArea.add(inventoryPanel, CARD_INVENTORY);
         contentArea.add(recipesPanel, CARD_RECIPES);
         contentArea.add(budgetsPanel, CARD_BUDGETS);
+        contentArea.add(moldCalculatorPanel, CARD_MOLDS);
         contentArea.add(assistantPanel, CARD_ASSISTANT);
 
         add(buildSidebar(), BorderLayout.WEST);
@@ -138,10 +142,11 @@ public class CulinaryOpsFrame extends JFrame {
         addNavButton(sidebar, CARD_INVENTORY, "3. Inventario");
         addNavButton(sidebar, CARD_RECIPES, "4. Recetas");
         addNavButton(sidebar, CARD_BUDGETS, "5. Presupuestos");
+        addNavButton(sidebar, CARD_MOLDS, "6. Moldes");
 
         sidebar.add(Box.createVerticalGlue());
 
-        JButton assistantBtn = createSidebarButton("6. Asistente");
+        JButton assistantBtn = createSidebarButton("7. Preguntas Frecuentes");
         assistantBtn.setBackground(CulinaryTheme.ACCENT_APRICOT);
         assistantBtn.setForeground(Color.WHITE);
         assistantBtn.addActionListener(e -> showModule(CARD_ASSISTANT));
@@ -201,6 +206,7 @@ public class CulinaryOpsFrame extends JFrame {
         inventoryPanel.refreshData();
         recipesPanel.refreshData();
         budgetsPanel.refreshData();
+        moldCalculatorPanel.refreshData();
         assistantPanel.refreshData();
     }
 }
